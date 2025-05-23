@@ -4,9 +4,11 @@ import { UpdateUserDto } from '../../dto/update-user.dto';
 import { UsersService } from '../users.service';
 
 @Injectable()
-export class CoachService extends UsersService {
+export class AthleteService extends UsersService {
+  
+  // responsible for creating an Athlete user
   create(createUserDto: CreateUserDto) {
-    return 'This action adds a new user';
+    return 'This action adds a new athlete';
   }
 
   findAll() {

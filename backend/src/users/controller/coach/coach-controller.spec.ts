@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { CoachService } from '../../services/coach/coach.service';
+import { CoachService } from '../../service/coach/coach.service';
 import { CoachController } from './coach.controller';
 
 describe('CoachController', () => {

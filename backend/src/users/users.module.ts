@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
-import { AthleteController } from './controllers/athlete/athlete.controller';
-import { CoachController } from './controllers/coach/coach.controller';
-import { AthleteService } from './services/athlete/athlete.service';
-import { CoachService } from './services/coach/coach.service';
+import { AthleteController } from './controller/athlete/athlete.controller';
+import { CoachController } from './controller/coach/coach.controller';
+import { AthleteService } from './service/athlete/athlete.service';
+import { CoachService } from './service/coach/coach.service';
 
 @Module({
   controllers: [AthleteController, CoachController],

@@ -12,17 +12,38 @@ export class CoachController {
     return this.coachService.create(createCoachDto);
   }
 
-  @Get()
-  findAll() {
+  /*
+  Endpoint used when a Coach opens their roster
+
+  Allows Coach to get alla thletes in their roster.
+  */
+  @Get('athletes')
+  findAllAthletes() {
     return this.coachService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
+  /*
+  Endpoint used when a Coach searches for a specific athlete
+
+  Allows Coach to get a specific athlete in their roster.
+  */
+  @Get('athletes/:id')
+  findAthlete(@Param('id') id: string) {
     return this.coachService.findOne(+id);
   }
 
-  @Patch(':id')
+  /*
+  Endpoint used when a Coach opens their athlete's schedule
+
+  Allows Coach to get a specific athlete's schedule.
+  */
+  @Get('athletes/:id/program')
+  getAthletePrograms(@Param() id: string, ) {
+    return this.coachService.findOne(+id);
+  }
+
+
+  @Patch('/athletes/:id/')
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.coachService.update(+id, updateUserDto);
   }

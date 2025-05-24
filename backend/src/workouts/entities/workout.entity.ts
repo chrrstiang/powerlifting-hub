@@ -1,8 +1,10 @@
-export class Workout {
-    id: number;
-    program: number;
-    athleteId: number;
-    date: Date;
-    movement: string;
+import { Exercise } from "./exercise.entity";
 
+export class Workout {
+    constructor(
+    public id: number,
+    public blockId: number,
+    public athleteId: number,
+    public exercises: Exercise[],
+    public date: Date) {}
 }

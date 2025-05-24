@@ -10,7 +10,11 @@ export class WorkoutsService {
 
   // this is the stuff that happens when a Workout is created
   create(createWorkoutDto: CreateWorkoutDto) {
-    const newWorkout: Workout = {id: this.nextId++, ...createWorkoutDto }
+    const newWorkout: Workout = {
+      id: this.nextId++, ...createWorkoutDto,
+      blockId: 0,
+      exercises: []
+    }
     this.workouts.push(newWorkout);
     return newWorkout;
   }

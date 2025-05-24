@@ -1,3 +1,5 @@
+import { LoadRange } from "src/common/types/load-range.class";
+
 export class Exercise {
 
     constructor(id: number,

@@ -10,7 +10,7 @@ export class AuthService {
 
   }
 
-  login() {
+  login(body: CreateAuthDto) {
 
   }
 

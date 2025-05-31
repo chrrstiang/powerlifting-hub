@@ -6,8 +6,12 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { BlockModule } from './block/block.module';
 import { ProgramModule } from './program/program.module';
+import { ConfigModule } from '@nestjs/config'
+
 @Module({
-  imports: [WorkoutsModule, UsersModule, AuthModule, BlockModule, ProgramModule],
+  imports: [ConfigModule.forRoot({
+    isGlobal: true,
+  }), WorkoutsModule, UsersModule, AuthModule, BlockModule, ProgramModule],
   controllers: [AppController],
   providers: [AppService],
 })

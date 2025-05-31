@@ -2,10 +2,13 @@ import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/commo
 import { AuthService } from '../service/auth.service';
 import { CreateAuthDto } from '../dto/create-auth.dto';
 import { UpdateAuthDto } from '../dto/update-auth.dto';
+import { SupabaseService } from 'src/supabase/supabase.service';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService,
+    private readonly supabaseService: SupabaseService
+  ) {}
 
   // handles logic for signing up a new user.
   @Post('signup')
@@ -13,10 +16,10 @@ export class AuthController {
     return this.authService.create(createAuthDto);
   }
 
-  // repsonsible for handling logic to log in a user.
+  // responsible for handling logic to log in a user.
   @Post('login')
-  login() {
-    
+  login(@Body() verifyAuthDto: CreateAuthDto) {
+    return this.authService.login(verifyAuthDto)
   }
 
   @Get()

@@ -15,7 +15,7 @@ export class CoachController {
   /*
   Endpoint used when a Coach opens their roster
 
-  Allows Coach to get alla thletes in their roster.
+  Allows Coach to get all athletes in their roster.
   */
   @Get('athletes')
   findAllAthletes() {

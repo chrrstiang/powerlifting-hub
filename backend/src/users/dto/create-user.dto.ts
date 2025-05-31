@@ -1,5 +1,6 @@
-import { IsString, IsNotEmpty, IsEnum, IsEmail } from 'class-validator'
+import { IsString, IsNotEmpty, IsEnum, IsEmail, MinLength } from 'class-validator'
 import { UserRole } from '../entities/user.abstract';
+import { IsUnique } from 'src/common/decorators/unique.decorator';
 
 export class CreateUserDto {
 
@@ -7,16 +8,22 @@ export class CreateUserDto {
   @IsNotEmpty()
   name: string;
 
+  @IsNotEmpty()
   @IsEmail()
+  @IsUnique('users', 'email', { message: "Email is already taken"})
   email: string;
 
-  @IsString()
   @IsNotEmpty()
+  @IsString()
+  @IsUnique('users', 'username', { message: "Username is already taken"})
   username: string;
 
   @IsString()
+  @IsNotEmpty()
+  @MinLength(6, { message: "Password must be at least 6 characters long"})
   password: string;
 
   @IsEnum(UserRole)
+  @IsNotEmpty()
   role: UserRole;
 }

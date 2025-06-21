@@ -1,8 +1,9 @@
-import { IsString, IsInt, IsOptional, ValidateNested } from 'class-validator';
+import { IsString, IsInt, IsOptional, ValidateNested, IsNumber } from 'class-validator';
 import { Type } from 'class-transformer';
 import { LoadRange } from 'src/common/types/load-range.class';
 import { PartialType } from '@nestjs/mapped-types';
 import { CreateExerciseDto } from './create-exercise.dto';
+import { IsUnique } from 'src/common/decorators/unique.decorator';
 
 export class UpdateExerciseDto extends PartialType(CreateExerciseDto){
   @IsOptional()
@@ -22,11 +23,11 @@ export class UpdateExerciseDto extends PartialType(CreateExerciseDto){
   reps?: number;
 
   @IsOptional()
-  @IsInt()
+  @IsNumber()
   intensity?: number;
 
   @IsOptional()
-  @IsInt()
+  @IsNumber()
   actualIntensity?: number;
 
   @IsOptional()

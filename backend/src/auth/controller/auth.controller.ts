@@ -10,35 +10,26 @@ export class AuthController {
     private readonly supabaseService: SupabaseService
   ) {}
 
-  // handles logic for signing up a new user.
+  /** Signs up an user of the application using their email and password.
+   * 
+   * @param createAuthDto The DTO containing the email and password of the user.
+   */
   @Post('signup')
   signUp(@Body() createAuthDto: CreateAuthDto) {
-    return this.authService.create(createAuthDto);
+    this.authService.createUser(createAuthDto, this.supabaseService.getClient());
   }
 
-  // responsible for handling logic to log in a user.
+  /** Logs an existing user into the application with their email and password.
+   * 
+   * @param verifyAuthDto The DTO containg the email and password used to log in.
+   */
   @Post('login')
   login(@Body() verifyAuthDto: CreateAuthDto) {
-    return this.authService.login(verifyAuthDto)
-  }
-
-  @Get()
-  findAll() {
-    return this.authService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.authService.findOne(+id);
+    this.authService.login(verifyAuthDto, this.supabaseService.getClient());
   }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateAuthDto: UpdateAuthDto) {
     return this.authService.update(+id, updateAuthDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.authService.remove(+id);
   }
 }

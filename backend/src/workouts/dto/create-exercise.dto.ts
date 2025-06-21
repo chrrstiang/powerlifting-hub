@@ -1,6 +1,7 @@
-import { IsString, IsInt, ValidateNested } from 'class-validator';
+import { IsString, IsInt, ValidateNested, IsNumber } from 'class-validator';
 import { Type } from 'class-transformer';
 import { LoadRange } from 'src/common/types/load-range.class';
+import { IsUnique } from 'src/common/decorators/unique.decorator';
 
 export class CreateExerciseDto {
     
@@ -16,10 +17,10 @@ export class CreateExerciseDto {
   @IsInt()
   reps: number;
 
-  @IsInt()
+  @IsNumber()
   intensity: number;
 
-  @IsInt()
+  @IsNumber()
   actualIntensity: number;
 
   @ValidateNested()

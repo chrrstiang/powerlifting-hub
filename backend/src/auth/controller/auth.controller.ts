@@ -28,8 +28,20 @@ export class AuthController {
     this.authService.login(verifyAuthDto, this.supabaseService.getClient());
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAuthDto: UpdateAuthDto) {
-    return this.authService.update(+id, updateAuthDto);
+  /** Logs a user out of their account on the current device/session.
+   * 
+   */
+  @Post('logout')
+  logout() {
+    this.authService.logout(this.supabaseService.getClient());
+  }
+
+  /** Finds the authenticated user with the given ID, and updates their email/password.
+   * 
+   * @param updateAuthDto The DTO containing the new field value to update (email or password).
+   */
+  @Patch('update')
+  update(@Body() updateAuthDto: UpdateAuthDto) {
+    return this.authService.update(updateAuthDto, this.supabaseService.getClient());
   }
 }

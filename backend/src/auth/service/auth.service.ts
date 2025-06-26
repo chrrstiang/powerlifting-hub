@@ -1,7 +1,10 @@
+import {
+  BadRequestException,
+  InternalServerErrorException
+} from '@nestjs/common';
 import { Injectable } from '@nestjs/common';
 import { CreateAuthDto } from '../dto/create-auth.dto';
 import { UpdateAuthDto } from '../dto/update-auth.dto';
-import { SupabaseService } from 'src/supabase/supabase.service';
 import { SupabaseClient } from '@supabase/supabase-js';
 
 @Injectable()
@@ -20,7 +23,9 @@ export class AuthService {
       password: body.password
     })
 
-    if (error) throw new Error("Failed to login user.");
+    if (error) {
+      throw new BadRequestException('Failed to login user.');
+    }
   }
 
   /** Logs a user out of the application.
@@ -30,7 +35,9 @@ export class AuthService {
   async logout(supabase: SupabaseClient) {
       const { error } = await supabase.auth.signOut();
 
-    if (error) throw new Error("Failed to log out.");
+      if (error) {
+        throw new InternalServerErrorException('Failed to log out.');
+      }
   }
 
   /** Creates a new user of the application. The user is created in the Auth table, 
@@ -57,7 +64,9 @@ export class AuthService {
       password: password
     })
 
-    if (error || !data?.user?.id || data == null) throw new Error("Could not sign up user.");
+    if (error || !data?.user?.id) {
+      throw new BadRequestException('Could not sign up user.');
+    }
 
     return data.user.id;
   }
@@ -72,7 +81,11 @@ export class AuthService {
         email: email
     })
 
-    if (error) throw new Error("Failed to store user in 'users' table.");
+    if (error) {
+      throw new InternalServerErrorException(
+        "Failed to store user in 'users' table.",
+      );
+    }
   }
 
   /** Method is called when a user attempts to update either the email or password of their 
@@ -88,7 +101,11 @@ export class AuthService {
         password: updateAuthDto.password
       });
   
-      if (error || !data.user.id || data == null) throw new Error("Failed to update email or password.");
+      if (error || !data?.user?.id) {
+        throw new BadRequestException(
+          'Failed to update email or password. Check input.',
+        );
+      }
 
       this.updateUser(updateAuthDto.email, data.user.id, supabase);
   }
@@ -102,6 +119,10 @@ export class AuthService {
     })
     .eq('id', id);
 
-    if (error) throw new Error("Failed to store new updates in 'users' table.")
+    if (error) {
+      throw new InternalServerErrorException(
+        "Failed to store new updates in 'users' table.",
+      );
+    }
   }
 }

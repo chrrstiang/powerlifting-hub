@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode } from '@nestjs/common';
 import { AuthService } from '../service/auth.service';
 import { CreateAuthDto } from '../dto/create-auth.dto';
 import { UpdateAuthDto } from '../dto/update-auth.dto';
@@ -15,8 +15,10 @@ export class AuthController {
    * @param createAuthDto The DTO containing the email and password of the user.
    */
   @Post('signup')
-  signUp(@Body() createAuthDto: CreateAuthDto) {
-    this.authService.createUser(createAuthDto, this.supabaseService.getClient());
+  @HttpCode(201)
+  async signUp(@Body() createAuthDto: CreateAuthDto) {
+    await this.authService.createUser(createAuthDto, this.supabaseService.getClient());
+    return { message: 'User created successfully' };
   }
 
   /** Logs an existing user into the application with their email and password.
@@ -24,16 +26,20 @@ export class AuthController {
    * @param verifyAuthDto The DTO containg the email and password used to log in.
    */
   @Post('login')
-  login(@Body() verifyAuthDto: CreateAuthDto) {
-    this.authService.login(verifyAuthDto, this.supabaseService.getClient());
+  @HttpCode(200)
+  async login(@Body() createAuthDto: CreateAuthDto) {
+    await this.authService.login(createAuthDto, this.supabaseService.getClient());
+    return { message: 'Login successful' };
   }
 
   /** Logs a user out of their account on the current device/session.
    * 
    */
   @Post('logout')
-  logout() {
-    this.authService.logout(this.supabaseService.getClient());
+  @HttpCode(200)
+  async logout() {
+    await this.authService.logout(this.supabaseService.getClient());
+    return { message: 'Logout successful' };
   }
 
   /** Finds the authenticated user with the given ID, and updates their email/password.
@@ -41,7 +47,9 @@ export class AuthController {
    * @param updateAuthDto The DTO containing the new field value to update (email or password).
    */
   @Patch('update')
-  update(@Body() updateAuthDto: UpdateAuthDto) {
-    return this.authService.update(updateAuthDto, this.supabaseService.getClient());
+  @HttpCode(200)
+  async update(@Body() updateAuthDto: UpdateAuthDto) {
+    await this.authService.update(updateAuthDto, this.supabaseService.getClient());
+    return { message: 'User updated successfully' };
   }
 }

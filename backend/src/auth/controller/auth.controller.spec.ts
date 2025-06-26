@@ -1,7 +1,14 @@
-import { SupabaseClient } from '@supabase/supabase-js';
 import { AuthController } from '../controller/auth.controller';
 import { AuthService } from '../service/auth.service';
 import { SupabaseService } from 'src/supabase/supabase.service';
+
+/**
+ * Unit Tests for AuthController
+ * 
+ * This suite tests:
+ * - Controller interaction with service layer methods.
+ * - Correctness of objects returned upon operation completion.
+ */
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -32,27 +39,31 @@ describe('AuthController', () => {
     );
   });
 
-  it('should call createUser with DTO and Supabase client', () => {
-    controller.signUp(dto);
+  it('should call createUser with DTO and Supabase client', async () => {
+    const signup = await controller.signUp(dto);
     expect(mockAuthService.createUser).toHaveBeenCalledWith(dto, mockSupabaseService.getClient());
     expect(mockAuthService.createUser).toHaveBeenCalledTimes(1);
+    expect(signup).toEqual({message: 'User created successfully'});
   });
 
   it('should call login with DTO and Supabase client', async () => {
-    controller.login(dto);
+    const login = await controller.login(dto);
     expect(mockAuthService.login).toHaveBeenCalledWith(dto, mockSupabaseService.getClient());
     expect(mockAuthService.login).toHaveBeenCalledTimes(1);
+    expect(login).toEqual({ message: 'Login successful' });
   })
 
   it('should call logout with Supabase client', async () => {
-    controller.logout();
+    const logout = await controller.logout();
     expect(mockAuthService.logout).toHaveBeenCalled();
     expect(mockAuthService.logout).toHaveBeenCalledTimes(1);
+    expect(logout).toEqual({ message: 'Logout successful' });
   })
 
   it('should call update with DTO and Supabase client', async () => {
-    controller.update(dto);
+    const update = await controller.update(dto);
     expect(mockAuthService.update).toHaveBeenCalledWith(dto, mockSupabaseService.getClient())
     expect(mockAuthService.update).toHaveBeenCalledTimes(1);
+    expect(update).toEqual({message: 'User updated successfully'})
   })
 });

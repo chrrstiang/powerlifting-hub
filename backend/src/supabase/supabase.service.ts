@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
@@ -13,10 +13,10 @@ private supabase: SupabaseClient;
 
 constructor(private configService: ConfigService) {
     const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
-    const supabaseKey = this.configService.get<string>('SUPABASE_SERVICE_ROLE_KEY');
+    const supabaseKey = this.configService.get<string>('SUPABASE_SERVICE_KEY');
 
     if (!supabaseUrl || !supabaseKey) {
-      throw new Error('Missing Supabase URL or Key in environment variables');
+      throw new NotFoundException('Missing Supabase URL or Key in environment variables');
     }
 
     this.supabase = createClient(supabaseUrl, supabaseKey);

@@ -24,7 +24,7 @@ export class AuthService {
     })
 
     if (error) {
-      throw new BadRequestException('Failed to login user.');
+      throw new BadRequestException('Failed to login user: ' + error.message);
     }
   }
 
@@ -64,8 +64,10 @@ export class AuthService {
       password: password
     })
 
-    if (error || !data?.user?.id) {
+    if (error) {
       throw new BadRequestException('Could not sign up user.');
+    } else if (!data?.user?.id) {
+      throw new InternalServerErrorException("ID could not be located upon sign up.");
     }
 
     return data.user.id;
@@ -83,7 +85,7 @@ export class AuthService {
 
     if (error) {
       throw new InternalServerErrorException(
-        "Failed to store user in 'users' table.",
+        "Failed to store user in 'users' table." + id + " " + email + " " + error.message,
       );
     }
   }

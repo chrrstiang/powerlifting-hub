@@ -16,8 +16,8 @@ export class AuthController {
    */
   @Post('signup')
   @HttpCode(201)
-  async signUp(@Body() createAuthDto: CreateAuthDto) {
-    await this.authService.createUser(createAuthDto, this.supabaseService.getClient());
+  async signUp(@Body() dto: CreateAuthDto) {
+    await this.authService.createUser(dto, this.supabaseService.getClient());
     return { message: 'User created successfully' };
   }
 
@@ -27,8 +27,8 @@ export class AuthController {
    */
   @Post('login')
   @HttpCode(200)
-  async login(@Body() createAuthDto: CreateAuthDto) {
-    await this.authService.login(createAuthDto, this.supabaseService.getClient());
+  async login(@Body() dto: CreateAuthDto) {
+    await this.authService.login(dto, this.supabaseService.getClient());
     return { message: 'Login successful' };
   }
 
@@ -48,8 +48,8 @@ export class AuthController {
    */
   @Patch('update')
   @HttpCode(200)
-  async update(@Body() updateAuthDto: UpdateAuthDto) {
-    await this.authService.update(updateAuthDto, this.supabaseService.getClient());
+  async update(@Body() dto: UpdateAuthDto) {
+    await this.authService.update(dto, this.supabaseService.getClient());
     return { message: 'User updated successfully' };
   }
 }

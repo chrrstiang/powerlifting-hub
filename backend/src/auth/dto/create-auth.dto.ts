@@ -1,12 +1,13 @@
-import { IsEmail, IsString, MinLength } from "class-validator";
+import { IsEmail, IsNotEmpty, IsString, MinLength } from "class-validator";
 import { IsUnique } from '../../common/decorators/unique.decorator';
 
 export class CreateAuthDto {
 
+    @IsNotEmpty()
     @IsEmail()
-    @IsUnique('users', 'email', {message: "Email is already being used"})
     email: string;
 
+    @IsNotEmpty()
     @IsString()
     @MinLength(6, {message: "Password must be at least 6 characters long"})
     password: string;

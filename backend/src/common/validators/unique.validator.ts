@@ -17,7 +17,7 @@ export class IsUniqueValidator implements ValidatorConstraintInterface {
         const [tableName, column] = validationArguments?.constraints;
         const supabase = this.supabaseService.getClient();
 
-        const { data, error } = await supabase
+        const { data } = await supabase
         .from(tableName)
         .select('id')
         .is(column, value)

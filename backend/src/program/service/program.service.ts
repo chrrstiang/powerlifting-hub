@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { CreateProgramDto } from './dto/create-program.dto';
-import { UpdateProgramDto } from './dto/update-program.dto';
+import { CreateProgramDto } from 'src/program/dto/create-program.dto';
+import { UpdateProgramDto } from 'src/program/dto/update-program.dto';
 
 @Injectable()
 export class ProgramService {

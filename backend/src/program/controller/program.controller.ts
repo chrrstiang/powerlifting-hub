@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { ProgramService } from './program.service';
-import { CreateProgramDto } from './dto/create-program.dto';
-import { UpdateProgramDto } from './dto/update-program.dto';
+import { ProgramService } from 'src/program/service/program.service';
+import { CreateProgramDto } from 'src/program/dto/create-program.dto';
+import { UpdateProgramDto } from 'src/program/dto/update-program.dto';
 
 @Controller('program')
 export class ProgramController {

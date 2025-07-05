@@ -28,8 +28,12 @@ export class AuthController {
   @Post('login')
   @HttpCode(200)
   async login(@Body() dto: CreateAuthDto) {
-    await this.authService.login(dto, this.supabaseService.getClient());
-    return { message: 'Login successful' };
+    const session = await this.authService.login(dto, this.supabaseService.getClient());
+    return { 
+      message: 'Login successful',
+      access_token: session.access_token,
+      user: session.user
+     };
   }
 
   /** Logs a user out of their account on the current device/session.

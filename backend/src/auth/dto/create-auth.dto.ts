@@ -1,5 +1,4 @@
 import { IsEmail, IsNotEmpty, IsString, MinLength } from "class-validator";
-import { IsUnique } from '../../common/decorators/unique.decorator';
 
 export class CreateAuthDto {
 
@@ -9,6 +8,6 @@ export class CreateAuthDto {
 
     @IsNotEmpty()
     @IsString()
-    @MinLength(6, {message: "Password must be at least 6 characters long"})
+    @MinLength(6, {message: "password must be at least 6 characters long"})
     password: string;
 }

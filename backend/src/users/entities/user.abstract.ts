@@ -1,11 +1,9 @@
-import { User } from "./user.interface";
-
 export enum UserRole {
     ATHLETE = 'athlete',
     COACH = 'coach',
   }
 
-export abstract class AUser implements User {
+export abstract class AUser  {
     
     constructor(
     public id: number,

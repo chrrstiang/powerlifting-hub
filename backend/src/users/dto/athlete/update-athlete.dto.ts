@@ -1,12 +1,7 @@
-import { CreateUserDto } from "../create-user.dto";
 import { IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator' 
-import { UserRole } from "src/users/entities/user.abstract";
+import { UpdateUserDto } from "../update-user.dto";
 
-export class CreateAthleteDto extends CreateUserDto {
-    
-    @IsNotEmpty()
-    @IsEnum(UserRole)
-    role: UserRole = UserRole.ATHLETE;
+export class UpdateAthleteDto extends UpdateUserDto {
 
     @IsOptional()
     @IsString()

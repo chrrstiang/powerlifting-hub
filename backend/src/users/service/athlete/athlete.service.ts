@@ -1,29 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { CreateUserDto } from '../../dto/create-user.dto';
-import { UpdateUserDto } from '../../dto/update-user.dto';
-import { UsersService } from '../users.service';
+import { UpdateUserDto } from '../../dto/update-user.dto';import { SupabaseClient } from '@supabase/supabase-js';
+;
 
 @Injectable()
-export class AthleteService extends UsersService {
+export class AthleteService {
   
   // responsible for creating an Athlete user
-  create(createUserDto: CreateUserDto) {
+  async createProfile(dto: CreateUserDto, supabase: SupabaseClient) {
     return 'This action adds a new athlete';
   }
 
-  findAll() {
-    return `This action returns all users`;
+  async retrievePublicProfile(supabase: SupabaseClient) {
+    return {};
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
-  }
-
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async updateProfile(updateUserDto: UpdateUserDto, supabase: SupabaseClient) {
+    return `This action updates a user`;
   }
 }

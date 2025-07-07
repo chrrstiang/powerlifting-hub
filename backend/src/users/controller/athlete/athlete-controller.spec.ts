@@ -1,20 +1,66 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { SupabaseService } from 'src/supabase/supabase.service';
 import { AthleteController } from './athlete.controller';
-import { AthleteService } from '../../service/athlete/athlete.service';
+import { AthleteService } from 'src/users/service/athlete/athlete.service';
 
 describe('AthleteController', () => {
   let controller: AthleteController;
+  let supabaseService: SupabaseService;
+  let athleteService: AthleteService;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [AthleteController],
-      providers: [AthleteService],
-    }).compile();
+    athleteService = {
+      createProfile: jest.fn(),
+      retrievePublicProfile: jest.fn(),
+      updateProfile: jest.fn()
+    } as unknown as jest.Mocked<AthleteService>;
 
-    controller = module.get<AthleteController>(AthleteController);
+    supabaseService = {
+      getClient: jest.fn().mockReturnValue({})
+    } as unknown as jest.Mocked<SupabaseService>;
+
+    controller = new AthleteController(
+      athleteService,
+      supabaseService,
+      supabaseService.getClient()
+    )
+    
   });
 
-  it('should be defined', () => {
-    expect(controller).toBeDefined();
+  it('controller.createProfile makes correct calls and returns', async () => {
+    const dto = {
+      name: 'Christian',
+      username: 'chrrstian_',
+      weight_class: '67.5kg',
+      division: 'Junior',
+      team: 'Northeastern Powerlifting',
+      coachId: 'f93bfd5e-574a-4fd6-8037-d66161386c54'
+    }
+
+    const call = await controller.createProfile(dto);
+    expect(call).toEqual({ message: "Profile created successfully"})
+    expect(athleteService.createProfile).toHaveBeenCalledWith(dto, supabaseService.getClient())
+  });
+
+  it('should return profile data from service', async () => {
+    const mockProfile = { id: 1, name: 'Test Athlete', weight_class: '170lb' };
+    jest.spyOn(athleteService, 'retrievePublicProfile').mockResolvedValue(mockProfile);
+    
+    const result = controller.retrievePublicProfile();
+    
+    expect(athleteService.retrievePublicProfile).toHaveBeenCalledWith(supabaseService.getClient());
+    expect(result).resolves.toEqual(mockProfile);
+  });
+
+  it('controller.updateProfile makes correct calls and returns', async () => {
+    const dto = {
+      name: 'Christian',
+      username: 'chrrstian_',
+      weight_class: '67.5kg',
+      coachId: 'f93bfd5e-574a-4fd6-8037-d66161386c54'
+    }
+
+    const call = await controller.updateProfile(dto);
+    expect(call).toEqual({ message: "Profile updated successfully"})
+    expect(athleteService.updateProfile).toHaveBeenCalledWith(dto, supabaseService.getClient())
   });
 });

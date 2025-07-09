@@ -1,6 +1,4 @@
-import { Program } from "src/program/entities/program.entity";
 import { AUser, UserRole } from "./user.abstract";
-import { Coach } from "./user.coach";
 
 export class Athlete extends AUser {
     constructor(
@@ -9,8 +7,10 @@ export class Athlete extends AUser {
     public username: string,
     public email: string,
     public role: UserRole,
-    public coach: Coach,
-    public program: Program
+    public coachId: string,
+    public weightClass: string,
+    public team: string,
+    public division: string,
     ) {
         super(id, name, username, email, role);
     }

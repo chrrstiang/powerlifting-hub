@@ -1,21 +1,19 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator' 
+import { IsOptional, IsString, IsUUID } from 'class-validator' 
 import { UpdateUserDto } from "../update-user.dto";
+import { CreateAthleteDto } from './create-athlete.dto';
+import { PartialType } from '@nestjs/mapped-types';
 
-export class UpdateAthleteDto extends UpdateUserDto {
-
-    @IsOptional()
-    @IsString()
-    weightClass: string;
+export class UpdateAthleteDto extends PartialType(CreateAthleteDto) {
 
     @IsOptional()
     @IsString()
-    division: string;
+    weightClass?: string;
 
     @IsOptional()
     @IsString()
-    team: string;
+    division?: string;
 
     @IsOptional()
-    @IsUUID()
-    coachId: string;
+    @IsString()
+    team?: string;
 }

@@ -8,8 +8,7 @@ export abstract class AUser  {
     constructor(
     public id: number,
     public name: string,
-    public email: string,
     public username: string,
-    protected password: string,
+    public email: string,
     public role: UserRole) {}
 }

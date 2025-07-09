@@ -1,21 +1,24 @@
 import { CreateUserDto } from "../create-user.dto";
-import { IsOptional, IsString, IsUUID } from 'class-validator'; 
+import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator'; 
 
 export class CreateAthleteDto extends CreateUserDto {
 
     @IsOptional()
     @IsString()
-    weight_class: string;
+    weight_class?: string;
 
     @IsOptional()
     @IsString()
-    division: string;
+    division?: string;
 
     @IsOptional()
     @IsString()
-    team: string;
+    team?: string;
+}
 
-    @IsOptional()
+export class CreateAthleteRecord extends CreateAthleteDto {
+    
+    @IsNotEmpty()
     @IsUUID()
-    coachId: string;
+    user_id: string
 }

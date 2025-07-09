@@ -33,7 +33,6 @@ describe('AthleteController', () => {
       weight_class: '67.5kg',
       division: 'Junior',
       team: 'Northeastern Powerlifting',
-      coachId: 'f93bfd5e-574a-4fd6-8037-d66161386c54'
     }
 
     const call = await controller.createProfile(dto);
@@ -56,7 +55,6 @@ describe('AthleteController', () => {
       name: 'Christian',
       username: 'chrrstian_',
       weight_class: '67.5kg',
-      coachId: 'f93bfd5e-574a-4fd6-8037-d66161386c54'
     }
 
     const call = await controller.updateProfile(dto);

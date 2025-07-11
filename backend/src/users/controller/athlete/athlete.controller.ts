@@ -1,18 +1,12 @@
-import { Controller, Get, Post, Body, Patch, HttpCode } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, HttpCode, Query } from '@nestjs/common';
 import { UpdateUserDto } from '../../dto/update-user.dto';
 import { AthleteService } from '../../service/athlete/athlete.service';
 import { CreateAthleteDto } from '../../dto/athlete/create-athlete.dto';
-import { SupabaseService } from 'src/supabase/supabase.service';
-import { SupabaseClient } from '@supabase/supabase-js';
 
 @Controller('athlete')
 export class AthleteController {
   constructor(
-    private readonly athleteService: AthleteService,
-    private readonly supabaseService: SupabaseService,
-    private supabase: SupabaseClient) {
-      this.supabase = this.supabaseService.getClient()
-    }
+    private readonly athleteService: AthleteService) {}
 
   /** Creates an athlete row in the Supabase 'athletes' table for the current
      * authenticated user. The profile is created using the provided fields in the DTO, where a 
@@ -24,7 +18,7 @@ export class AthleteController {
   @Post('profile')
   @HttpCode(201)
   async createProfile(@Body() createAthleteDto: CreateAthleteDto) {
-    this.athleteService.createProfile(createAthleteDto, this.supabase);
+    this.athleteService.createProfile(createAthleteDto);
     return { message: 'Profile created successfully' }
   }
 
@@ -35,8 +29,9 @@ export class AthleteController {
    */
   @Get('profile')
   @HttpCode(200)
-  async retrievePublicProfile() {
-    return this.athleteService.retrievePublicProfile(this.supabase);
+  async retrieveProfileDetails(@Query('data') data?: string) {
+    const columnsArray = data ? data.split(',') : undefined;
+    return this.athleteService.retrieveProfileDetails(columnsArray);
   }
 
   /** Updates the athlete row with the same user_id value as the current 
@@ -49,7 +44,7 @@ export class AthleteController {
   @Patch('profile')
   @HttpCode(200)
   async updateProfile(@Body() updateUserDto: UpdateUserDto) {
-    this.athleteService.updateProfile(updateUserDto, this.supabase);
+    this.athleteService.updateProfile(updateUserDto);
     return { message: 'Profile updated successfully' }
   }
 }

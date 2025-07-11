@@ -11,6 +11,6 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
 
     @IsOptional()
     @IsString()
-    @IsUnique('users', 'email', { message: "Username is already taken"})
+    @IsUnique('users', 'username', { message: "Username is already taken"})
     username?: string;
 }

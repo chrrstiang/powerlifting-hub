@@ -1,20 +1,32 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { CreateUserDto } from '../../dto/create-user.dto';
-import { UpdateUserDto } from '../../dto/update-user.dto';import { SupabaseClient } from '@supabase/supabase-js';
-import { CreateAthleteDto, CreateAthleteRecord } from 'src/users/dto/athlete/create-athlete.dto';
+import { BadRequestException, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
+import { AuthError, PostgrestError, SupabaseClient } from '@supabase/supabase-js';
+import { MissingIdException } from 'src/common/exceptions/missing-id';
+import { SupabaseService } from 'src/supabase/supabase.service';
+import { CreateAthleteDto } from 'src/users/dto/athlete/create-athlete.dto';
+import { UpdateAthleteDto } from 'src/users/dto/athlete/update-athlete.dto';
 ;
 
+/** The AthleteService class contains business logic for the API endpoints of the AthleteController.
+ *  This contains operations such as inserting/updating athlete profiles to Supabase,
+ * retrieveing profile details of an Athlete, and...
+ * 
+ */
 @Injectable()
 export class AthleteService {
+
+  supabase: SupabaseClient;
+
+  constructor(private readonly supabaseService: SupabaseService) {
+    this.supabase = this.supabaseService.getClient()
+  }
   
   /** Inserts a row into the 'athletes' table with the data contained in the
    * DTO. Additionally, the name and username of the DTO are stored in the 'users' table.
    * 
    * @param dto The DTO containing the athlete profile data.
-   * @param supabase The Supabase client.
    */
-  async createProfile(dto: CreateAthleteDto, supabase: SupabaseClient) {
-    const user = await this.getAuthUser(supabase);
+  async createProfile(dto: CreateAthleteDto) {
+    const user = await this.getAuthUser();
   
     const user_id = user.user.id
   
@@ -23,20 +35,20 @@ export class AthleteService {
   
     // Insert into 'users'
     const userData = { name, username };
-    await this.addToTable(userData, 'users', supabase);
+    await this.addToTable(userData, 'users');
   
     // Insert into 'athletes'
     const athleteData = { ...athleteFields, user_id: user_id };
-    await this.addToTable(athleteData, 'athletes', supabase);
+    await this.addToTable(athleteData, 'athletes');
   }
 
   /** Queries the database for the row with the same user_id as the current authenticated
    * user's id, fetching columns that make up the public profile of the athlete.
    * 
-   * @param supabase The Supabase client. 
-   * @returns An object containing the data of the public athlete profile.
+   * @param columns An array containing the columns of the profile to return.
+   * @returns An object containing the values of the columns requested.
    */
-  async retrievePublicProfile(supabase: SupabaseClient) {
+  async retrieveProfileDetails(columns: Array<string> | undefined) {
     return {};
   }
 
@@ -45,19 +57,16 @@ export class AthleteService {
    * was updated, therefore the DTO contains one field.
    * 
    * @param updateUserDto The DTO containing the updated column value.
-   * @param supabase The Supabase client.
    */
-  async updateProfile(dto: UpdateUserDto, supabase: SupabaseClient) {
-
+  async updateProfile(dto: UpdateAthleteDto) {
     // ensure only one new value is in DTO.
     const fieldCount = Object.values(dto).filter(value => value !== undefined).length;
   
     if (fieldCount !== 1) {
-    throw new BadRequestException('Exactly one field must be provided for update');
+    throw new BadRequestException('Exactly one field must be provided for update.');
     }
 
-    const user = await this.getAuthUser(supabase);
-
+    const user = await this.getAuthUser();
     let table: string;
     let cond: string;
 
@@ -69,39 +78,55 @@ export class AthleteService {
       cond = 'user_id';
     }
 
-    const { error } = await supabase
+    const { error } = await this.supabase
     .from(table)
     .update(dto)
     .eq(cond, user.user.id);
 
     if (error) {
-      this.handleSupabaseError(error);
+      this.handleSupabaseError(error, 'update');
     }
   }
 
   // adds the object containing specific fields to the designated table.
-  private async addToTable(data: any, table: string, supabase: SupabaseClient) {
-    const { error } = await supabase.from(table).insert(data);
+  private async addToTable(data: any, table: string) {
+    const { error } = await this.supabase.from(table).insert(data);
 
     if (error) {
-     this.handleSupabaseError(error)
+     this.handleSupabaseError(error, 'insert')
     }
   }
 
-  private handleSupabaseError(error: any) {
-    
+  // given an error returned by Supabase, displays an appropriate message 
+  private handleSupabaseAuthError(error: AuthError, operation: string) {
+    switch (error.code) {
+      case 'invalid_credentials':
+      case 'user_not_found':
+      case 'session_not_found':
+      case 'jwt_expired':
+        throw new UnauthorizedException('Authentication failed. Please log in again.');
+      default:
+        throw new InternalServerErrorException(`An unexpected error occured for ${operation}:
+      ${error.code} - ${error.message}`);
+      }
+    }
+
+    // given an error returned by Supabase, displays an appropriate message 
+  private handleSupabaseError(error: PostgrestError, operation: string) {
+    throw new BadRequestException(`An unexpected error occured for ${operation}:
+      ${error.code} - ${error.message}`);
   }
 
   // returns the authenticated user and ensures its non-null.
-  private async getAuthUser(supabase: SupabaseClient) {
-    const { data, error } = await supabase.auth.getUser();
+  private async getAuthUser() {
+    const { data, error } = await this.supabase.auth.getUser();
 
     if (error) {
-      this.handleSupabaseError(error);
+      this.handleSupabaseAuthError(error, 'getUser');
     }
 
     if (!data.user?.id) {
-      throw new BadRequestException('Could not find user id.')
+      throw new MissingIdException();
     }
 
     return data;

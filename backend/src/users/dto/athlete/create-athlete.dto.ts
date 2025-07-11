@@ -15,10 +15,3 @@ export class CreateAthleteDto extends CreateUserDto {
     @IsString()
     team?: string;
 }
-
-export class CreateAthleteRecord extends CreateAthleteDto {
-    
-    @IsNotEmpty()
-    @IsUUID()
-    user_id: string
-}

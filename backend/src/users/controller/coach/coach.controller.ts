@@ -29,7 +29,7 @@ export class CoachController {
 
   @Patch('/athletes/:id/')
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.coachService.update(id, updateUserDto);
+    return this.coachService.update(+id, updateUserDto);
   }
 
   @Delete(':id')

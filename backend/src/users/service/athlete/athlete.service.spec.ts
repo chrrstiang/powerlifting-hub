@@ -27,9 +27,16 @@ describe('AthleteService', () => {
         data: {},
         error: null
       }),
-      select: jest.fn().mockResolvedValue({
-        data: {},
-        error: null
+      select: jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          single: jest.fn().mockResolvedValue({
+            data: {
+              name: 'christian',
+              username: 'chrrstian'
+            },
+            error: null
+          })
+        })
       }),
       update: jest.fn().mockReturnValue({
         eq: jest.fn().mockResolvedValue({ data: {}, error: null }),
@@ -232,6 +239,34 @@ describe('AthleteService', () => {
       45404 - I failed`))
     expect(supabase.auth.getUser).toHaveBeenCalled();
     expect(supabase.from('athletes').update).toHaveBeenCalledWith(dto);
+  })
+
+  it('retrieveProfileDetails should successfully passes the correct query to select for \'users\'', async () => {
+    await service.retrieveProfileDetails(['name', 'username']);
+
+    expect(supabase.from('athletes').select).toHaveBeenCalledWith(`users(name,username)`)
+    expect(supabase.from('athletes').select).toHaveBeenCalledTimes(1);
+  })
+
+  it('retrieveProfileDetails should successfully passes the correct query to select for \'athletes\'', async () => {
+    await service.retrieveProfileDetails(['weight_class', 'division']);
+
+    expect(supabase.from('athletes').select).toHaveBeenCalledWith(`weight_class,division`)
+    expect(supabase.from('athletes').select).toHaveBeenCalledTimes(1);
+  })
+
+  it('retrieveProfileDetails should successfully passes the correct query to select all (no arg)', async () => {
+    await service.retrieveProfileDetails(undefined);
+
+    expect(supabase.from('athletes').select).toHaveBeenCalledWith('weight_class,division,users(name,username,email)')
+    expect(supabase.from('athletes').select).toHaveBeenCalledTimes(1);
+  })
+
+  it('retrieveProfileDetails should successfully passes the correct query to select all (individual)', async () => {
+    await service.retrieveProfileDetails(['name', 'username', 'email', 'weight_class', 'division']);
+
+    expect(supabase.from('athletes').select).toHaveBeenCalledWith('weight_class,division,users(name,username,email)')
+    expect(supabase.from('athletes').select).toHaveBeenCalledTimes(1);
   })
 
   // Add your specific tests here

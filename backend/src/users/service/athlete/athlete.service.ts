@@ -48,8 +48,43 @@ export class AthleteService {
    * @param columns An array containing the columns of the profile to return.
    * @returns An object containing the values of the columns requested.
    */
-  async retrieveProfileDetails(columns: Array<string> | undefined) {
-    return {};
+  async retrieveProfileDetails(columns?: string[]) {
+    let selectQuery: string;
+
+    const user = await this.getAuthUser();
+    const id = user.user.id;
+    
+    if (columns && columns.length > 0) {
+      // Separate fields by table
+      const athleteFields = columns.filter(f => 
+        ['weight_class', 'division', 'team', 'id'].includes(f)
+      );
+      const userFields = columns.filter(f => 
+        ['name', 'username', 'email'].includes(f)
+      );
+      
+      // Build the select query
+      const athletePart = athleteFields.length > 0 ? athleteFields.join(',') : '';
+      const userPart = userFields.length > 0 ? `users(${userFields.join(',')})` : '';
+      
+      // Combine parts
+      selectQuery = [athletePart, userPart].filter(Boolean).join(',');
+    } else {
+      // Default: select all relevant fields
+      selectQuery = 'weight_class,division,users(name,username,email)';
+    }
+  
+    const { data, error } = await this.supabase
+      .from('athletes')
+      .select(selectQuery)
+      .eq('user_id', id)
+      .single();
+  
+    if (error) {
+      this.handleSupabaseError(error, 'select');
+    };
+
+    return data;
   }
 
   /** Updates the column of the user in the 'athletes' table with the

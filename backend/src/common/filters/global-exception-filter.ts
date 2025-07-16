@@ -1,4 +1,4 @@
-import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus } from '@nestjs/common';
+import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus, BadRequestException } from '@nestjs/common';
 import { Request, Response } from 'express';
 
 
@@ -6,7 +6,8 @@ import { Request, Response } from 'express';
 export class GlobalExceptionFilter implements ExceptionFilter {
   
   // This method gets called whenever an unhandled exception occurs
-  catch(exception: unknown, host: ArgumentsHost) {
+  catch(exception: HttpException, host: ArgumentsHost) {
+
     console.log('🔥 Exception caught by filter:', exception);
     
     const ctx = host.switchToHttp();

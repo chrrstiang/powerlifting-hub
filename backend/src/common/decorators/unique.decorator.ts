@@ -1,5 +1,5 @@
 import { registerDecorator, ValidationOptions } from "class-validator";
-import { IsUniqueValidator } from "../validators/unique.validator";
+import { IsUniqueValidator } from "../validation/validators/unique.validator";
 
 export function IsUnique(
     tableName: string,

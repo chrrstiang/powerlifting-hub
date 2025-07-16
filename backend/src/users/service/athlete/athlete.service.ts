@@ -27,8 +27,17 @@ export class AthleteService {
    */
   async createProfile(dto: CreateAthleteDto) {
     const user = await this.getAuthUser();
-  
+
     const user_id = user.user.id
+
+    const { error } = await this.supabase
+    .from('users')
+    .update({role: 'Athlete'})
+    .eq('id', user_id)
+
+    if (error) {
+      throw new BadRequestException(`Failed to update user role: ${error.code} - ${error.message}`);
+    }
   
     // Seperate data for 'athletes' and 'users' table
     const { name, username, ...athleteFields } = dto;
@@ -43,7 +52,7 @@ export class AthleteService {
   }
 
   /** Queries the database for the row with the same user_id as the current authenticated
-   * user's id, fetching columns that make up the public profile of the athlete.
+   * user's id, fetching columns in the columns array. If undefined, then it selects all public fields.
    * 
    * @param columns An array containing the columns of the profile to return.
    * @returns An object containing the values of the columns requested.

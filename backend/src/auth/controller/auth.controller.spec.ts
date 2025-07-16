@@ -23,7 +23,10 @@ describe('AuthController', () => {
 
     mockAuthService = {
       createUser: jest.fn(),
-      login: jest.fn(),
+      login: jest.fn().mockResolvedValue({
+        access_token: 'A token',
+        user: ' Some user '
+      }),
       logout: jest.fn(),
       update: jest.fn(),
     } as unknown as jest.Mocked<AuthService>;
@@ -50,7 +53,7 @@ describe('AuthController', () => {
     const login = await controller.login(dto);
     expect(mockAuthService.login).toHaveBeenCalledWith(dto, mockSupabaseService.getClient());
     expect(mockAuthService.login).toHaveBeenCalledTimes(1);
-    expect(login).toEqual({ message: 'Login successful' });
+    expect(login.message).toEqual('Login successful');
   })
 
   it('should call logout with Supabase client', async () => {

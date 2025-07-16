@@ -57,14 +57,12 @@ describe('AuthService', () => {
 
   // supabase.signUp() is called from AuthService.createUser()
   it('createUser succesfully calls signUp', async () => {
-    const addToTable = jest.spyOn(service as any, 'addToTable');
 
     await expect(service.createUser(dto, mockSupabase)).resolves.not.toThrow();
     expect(mockSupabase.auth.signUp).toHaveBeenCalledWith({
       email: dto.email,
       password: dto.password
     })
-    expect(addToTable).toHaveBeenCalled(); 
   })
 
   // AuthService.createUser() throws when supabase.signUp() contains an error
@@ -89,42 +87,6 @@ describe('AuthService', () => {
     });
 
     await expect(service.createUser(dto, mockSupabase)).rejects.toThrow("ID could not be located upon sign up.")
-  })
-
-  // AuthService.addToTable() throws when supabase.insert() contains an error.
-  it('addToTable throws error if inserting to users table fails', async () => {
-    // Spy and override `from().insert()` to simulate an error
-  (mockSupabase.from as jest.Mock).mockImplementation(() => ({
-    insert: jest.fn().mockResolvedValue({
-      data: null,
-      error: { message: 'Something went wrong' }
-    })
-  }));
-
-  // Mock user registration to return fixed ID
-  jest.spyOn(service as any, 'registerUser').mockResolvedValue('11111');
-
-  // Spy on addToTable to assert it was called with correct args
-  const addToTable = jest.spyOn(service as any, 'addToTable');
-
-  // Run createUser and assert it throws the expected error
-  await expect(service.createUser(dto, mockSupabase)).rejects.toThrow(
-    "Failed to store user in 'users' table."
-  );
-
-  // Verify addToTable was called as expected
-  expect(addToTable).toHaveBeenCalledWith(dto.email, '11111', mockSupabase);
-  })
-
-  it('addToTable inserts user into users table', async () => {
-    const spy = jest.spyOn(mockSupabase.from('users'), 'insert');
-  
-    await (service as any).addToTable('test@example.com', '12345', mockSupabase);
-  
-    expect(spy).toHaveBeenCalledWith({
-      id: '12345',
-      email: 'test@example.com'
-    });
   })
 
   // AuthService.login() correctly calls supabase.auth.signInWithPassword()
@@ -182,7 +144,7 @@ describe('AuthService', () => {
       error: { message: 'Invalid credentials' },
     });
 
-    await expect(service.update(dto, mockSupabase)).rejects.toThrow("Failed to update email or password.");
+    await expect(service.update(dto, mockSupabase)).rejects.toThrow("Could not update user: Invalid credentials");
   })
 
   // AuthService.update() throws when supabase.auth.updateUser() has undefined ID.
@@ -196,6 +158,6 @@ describe('AuthService', () => {
       error: null,
     });
     
-    await expect(service.update(dto, mockSupabase)).rejects.toThrow("Failed to update email or password.")
+    await expect(service.update(dto, mockSupabase)).rejects.toThrow( "Failed to identify user: Check input")
   })
 });

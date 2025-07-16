@@ -352,6 +352,4 @@ describe('Auth E2E Tests', () => {
       "Could not update user: A user with this email address has already been registered"
     );
   })
-
-
 });

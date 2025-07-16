@@ -17,10 +17,10 @@ export class IsUniqueValidator implements ValidatorConstraintInterface {
         const [tableName, column] = validationArguments?.constraints;
         const supabase = this.supabaseService.getClient();
 
-        const { data } = await supabase
+        const { data } = await (supabase as any)
         .from(tableName)
         .select('id')
-        .is(column, value)
+        .eq(column, value)
         .maybeSingle() as any;
 
         return !data;

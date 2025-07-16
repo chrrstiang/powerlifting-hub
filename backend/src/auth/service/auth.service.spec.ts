@@ -88,7 +88,7 @@ describe('AuthService', () => {
       error: null
     });
 
-    await expect(service.createUser(dto, mockSupabase)).rejects.toThrow("Could not sign up user.")
+    await expect(service.createUser(dto, mockSupabase)).rejects.toThrow("ID could not be located upon sign up.")
   })
 
   // AuthService.addToTable() throws when supabase.insert() contains an error.
@@ -143,7 +143,7 @@ describe('AuthService', () => {
       error: { message: 'Invalid credentials' },
     });
   
-    await expect(service.login(dto, mockSupabase)).rejects.toThrow('Failed to login user.');
+    await expect(service.login(dto, mockSupabase)).rejects.toThrow('Failed to login user: Invalid credentials');
     expect(mockSupabase.auth.signInWithPassword).toHaveBeenCalledWith({
       email: dto.email,
       password: dto.password

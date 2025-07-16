@@ -1,16 +1,17 @@
 import { CreateUserDto } from "../create-user.dto";
-import { Program } from "src/program/entities/program.entity";
-import { IsEnum, IsString } from 'class-validator' 
-import { UserRole } from "src/users/entities/user.abstract";
+import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator'; 
 
 export class CreateAthleteDto extends CreateUserDto {
-    
-    @IsEnum(UserRole)
-    role: UserRole = UserRole.ATHLETE;
 
+    @IsOptional()
     @IsString()
-    coachId: string;
+    weight_class?: string;
 
+    @IsOptional()
     @IsString()
-    programId: Program;
+    division?: string;
+
+    @IsOptional()
+    @IsString()
+    team?: string;
 }

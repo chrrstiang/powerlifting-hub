@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Patch, HttpCode, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, HttpCode, Query, UseGuards, Req } from '@nestjs/common';
 import { UpdateUserDto } from '../../dto/update-user.dto';
 import { AthleteService } from '../../service/athlete/athlete.service';
 import { CreateAthleteDto } from '../../dto/athlete/create-athlete.dto';
+import { JwtAuthGuard } from 'src/common/validation/guards/auth-guard';
 
 @Controller('athlete')
 export class AthleteController {
@@ -16,9 +17,11 @@ export class AthleteController {
      * @returns An object containing a success message.
      */
   @Post('profile')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(201)
-  async createProfile(@Body() createAthleteDto: CreateAthleteDto) {
-    this.athleteService.createProfile(createAthleteDto);
+  async createProfile(@Body() createAthleteDto: CreateAthleteDto, @Req() req) {
+    const user = req.user
+    this.athleteService.createProfile(createAthleteDto, user);
     return { message: 'Profile created successfully' }
   }
 
@@ -28,10 +31,12 @@ export class AthleteController {
    * @returns An object containing the fields of the public athlete profile.
    */
   @Get('profile')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(200)
-  async retrieveProfileDetails(@Query('data') data?: string) {
+  async retrieveProfileDetails(@Req() req, @Query('data') data?: string) {
+    const user = req.user
     const columnsArray = data ? data.split(',') : undefined;
-    return this.athleteService.retrieveProfileDetails(columnsArray);
+    return this.athleteService.retrieveProfileDetails(user, columnsArray);
   }
 
   /** Updates the athlete row with the same user_id value as the current 
@@ -42,9 +47,11 @@ export class AthleteController {
    * @returns An object containing a success message.
    */
   @Patch('profile')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(200)
-  async updateProfile(@Body() updateUserDto: UpdateUserDto) {
-    this.athleteService.updateProfile(updateUserDto);
+  async updateProfile(@Body() updateUserDto: UpdateUserDto, @Req() req) {
+    const user = req.user;
+    this.athleteService.updateProfile(updateUserDto, user);
     return { message: 'Profile updated successfully' }
   }
 }

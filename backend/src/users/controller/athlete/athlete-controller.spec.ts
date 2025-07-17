@@ -4,6 +4,8 @@ import { AthleteService } from 'src/users/service/athlete/athlete.service';
 describe('AthleteController', () => {
   let controller: AthleteController;
   let athleteService: AthleteService;
+  let user;
+  let request;
 
   beforeEach(async () => {
     athleteService = {
@@ -17,6 +19,12 @@ describe('AthleteController', () => {
     } as unknown as jest.Mocked<AthleteService>;
 
     controller = new AthleteController(athleteService)
+
+    request = {
+      user: {
+        id: 'user-uuid'
+      }
+    }
     
   });
 
@@ -29,15 +37,15 @@ describe('AthleteController', () => {
       team: 'Northeastern Powerlifting',
     }
 
-    const call = await controller.createProfile(dto);
+    const call = await controller.createProfile(dto, request);
     expect(call).toEqual({ message: "Profile created successfully"})
-    expect(athleteService.createProfile).toHaveBeenCalledWith(dto)
+    expect(athleteService.createProfile).toHaveBeenCalledWith(dto, request.user)
   });
 
   it('should return profile data from service', async () => {
-    const result = controller.retrieveProfileDetails('name,username,weight_class');
+    const result = controller.retrieveProfileDetails(request, 'name,username,weight_class');
     
-    expect(athleteService.retrieveProfileDetails).toHaveBeenCalledWith(['name', 'username', 'weight_class']);
+    expect(athleteService.retrieveProfileDetails).toHaveBeenCalledWith(request.user, ['name', 'username', 'weight_class']);
     expect(result).resolves.toEqual({
       name: 'christian', username: 'chrrstian', weight_class: '67.5kg'
     });
@@ -50,8 +58,8 @@ describe('AthleteController', () => {
       weight_class: '67.5kg',
     }
 
-    const call = await controller.updateProfile(dto);
+    const call = await controller.updateProfile(dto, request);
     expect(call).toEqual({ message: "Profile updated successfully"})
-    expect(athleteService.updateProfile).toHaveBeenCalledWith(dto)
+    expect(athleteService.updateProfile).toHaveBeenCalledWith(dto, request.user)
   });
 });

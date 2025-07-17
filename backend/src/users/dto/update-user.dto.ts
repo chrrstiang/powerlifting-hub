@@ -1,7 +1,7 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { CreateUserDto } from './create-user.dto';
 import { IsString, IsOptional } from 'class-validator'
-import { IsUnique } from 'src/common/decorators/unique.decorator';
+import { IsUnique } from 'src/common/validation/decorators/unique.decorator';
 
 export class UpdateUserDto extends PartialType(CreateUserDto) {
 

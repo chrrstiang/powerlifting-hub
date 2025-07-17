@@ -5,8 +5,11 @@ import { App } from 'supertest/types';
 import { AppModule } from 'src/app.module';
 import { GlobalExceptionFilter } from 'src/common/filters/global-exception-filter';
 import { validationExceptionFactory } from 'src/common/validation/pipes/exception-factory';
+import { AthleteService } from 'src/users/service/athlete/athlete.service';
+import { useContainer } from 'class-validator';
 
 /** Test cases:
+ * npm run test:e2e athlete.e2e-spec.ts
  * --- Create Profile ---
  * - Successful with all fields
  * - Successful with only required fields
@@ -33,6 +36,7 @@ import { validationExceptionFactory } from 'src/common/validation/pipes/exceptio
  */
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
+  let athleteService;
   let dto;
   let profileLogin;
 
@@ -42,6 +46,8 @@ describe('AppController (e2e)', () => {
       }).compile();
   
       app = moduleFixture.createNestApplication();
+
+      useContainer(app.select(AppModule), { fallbackOnErrors: true });
   
       app.useGlobalPipes(new ValidationPipe({
         transform: true,
@@ -57,11 +63,17 @@ describe('AppController (e2e)', () => {
   
       await app.init(); // Start the NestJS app context
 
+      athleteService = moduleFixture.get(AthleteService);
+
       profileLogin = {
         email: 'testingprofilecreate@gmail.com',
         password: 'test-create-101'
       }
   });
+
+  afterEach(async () => {
+    await app.close();
+  })
 
   it('createProfile successfully creates athletes record and updates user record with all possible fields', async () => {
 
@@ -71,6 +83,8 @@ describe('AppController (e2e)', () => {
 
     expect(login.status).toBe(200);
     expect(login.body.message).toBe('Login successful');
+
+    const token = login.body.access_token;
 
     dto = {
         name: 'christian',
@@ -82,7 +96,10 @@ describe('AppController (e2e)', () => {
 
     const res = await request(app.getHttpServer())
     .post('/athlete/profile')
+    .set('Authorization', `Bearer ${token}`)
     .send(dto);
+
+    console.log(res.body)
 
     expect(res.status).toBe(201);
     expect(res.body.message).toBe('Profile created successfully');

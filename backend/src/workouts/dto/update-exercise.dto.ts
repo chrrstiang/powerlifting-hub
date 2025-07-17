@@ -3,7 +3,7 @@ import { Type } from 'class-transformer';
 import { LoadRange } from 'src/common/types/load-range.class';
 import { PartialType } from '@nestjs/mapped-types';
 import { CreateExerciseDto } from './create-exercise.dto';
-import { IsUnique } from 'src/common/decorators/unique.decorator';
+import { IsUnique } from 'src/common/validation/decorators/unique.decorator';
 
 export class UpdateExerciseDto extends PartialType(CreateExerciseDto){
   @IsOptional()

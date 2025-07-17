@@ -17,6 +17,9 @@ export class AthleteService {
   supabase: SupabaseClient;
 
   constructor(private readonly supabaseService: SupabaseService) {
+    if (!this.supabaseService) {
+      throw new InternalServerErrorException('SupabaseService is undefined');
+    }
     this.supabase = this.supabaseService.getClient()
   }
   
@@ -25,10 +28,9 @@ export class AthleteService {
    * 
    * @param dto The DTO containing the athlete profile data.
    */
-  async createProfile(dto: CreateAthleteDto) {
-    const user = await this.getAuthUser();
+  async createProfile(dto: CreateAthleteDto, user: any) {
 
-    const user_id = user.user.id
+    const user_id = user.id
 
     const { error } = await this.supabase
     .from('users')
@@ -57,11 +59,10 @@ export class AthleteService {
    * @param columns An array containing the columns of the profile to return.
    * @returns An object containing the values of the columns requested.
    */
-  async retrieveProfileDetails(columns?: string[]) {
+  async retrieveProfileDetails(user: any, columns?: string[]) {
     let selectQuery: string;
 
-    const user = await this.getAuthUser();
-    const id = user.user.id;
+    const id = user.id;
     
     if (columns && columns.length > 0) {
       // Separate fields by table
@@ -102,7 +103,7 @@ export class AthleteService {
    * 
    * @param updateUserDto The DTO containing the updated column value.
    */
-  async updateProfile(dto: UpdateAthleteDto) {
+  async updateProfile(dto: UpdateAthleteDto, user: any) {
     // ensure only one new value is in DTO.
     const fieldCount = Object.values(dto).filter(value => value !== undefined).length;
   
@@ -110,7 +111,8 @@ export class AthleteService {
     throw new BadRequestException('Exactly one field must be provided for update.');
     }
 
-    const user = await this.getAuthUser();
+    const id = user.id
+
     let table: string;
     let cond: string;
 
@@ -125,7 +127,7 @@ export class AthleteService {
     const { error } = await this.supabase
     .from(table)
     .update(dto)
-    .eq(cond, user.user.id);
+    .eq(cond, id);
 
     if (error) {
       this.handleSupabaseError(error, 'update');
@@ -141,38 +143,9 @@ export class AthleteService {
     }
   }
 
-  // given an error returned by Supabase, displays an appropriate message 
-  private handleSupabaseAuthError(error: AuthError, operation: string) {
-    switch (error.code) {
-      case 'invalid_credentials':
-      case 'user_not_found':
-      case 'session_not_found':
-      case 'jwt_expired':
-        throw new UnauthorizedException('Authentication failed. Please log in again.');
-      default:
-        throw new InternalServerErrorException(`An unexpected error occured for ${operation}:
-      ${error.code} - ${error.message}`);
-      }
-    }
-
     // given an error returned by Supabase, displays an appropriate message 
   private handleSupabaseError(error: PostgrestError, operation: string) {
     throw new BadRequestException(`An unexpected error occured for ${operation}:
       ${error.code} - ${error.message}`);
-  }
-
-  // returns the authenticated user and ensures its non-null.
-  private async getAuthUser() {
-    const { data, error } = await this.supabase.auth.getUser();
-
-    if (error) {
-      this.handleSupabaseAuthError(error, 'getUser');
-    }
-
-    if (!data.user?.id) {
-      throw new MissingIdException();
-    }
-
-    return data;
   }
 }

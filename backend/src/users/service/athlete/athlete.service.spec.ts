@@ -16,6 +16,7 @@ describe('AthleteService', () => {
   let service: AthleteService;
   let supabase: SupabaseClient;
   let dto;
+  let user;
   let addToTable;
   let mockUsersChain;
   let mockAthletesChain;
@@ -44,13 +45,7 @@ describe('AthleteService', () => {
     }
 
     supabase = {
-      from: jest.fn().mockReturnValue(queries),
-      auth: {
-        getUser: jest.fn().mockResolvedValue({
-          data: { user: {id: 'user-uuid'}},
-          error: null
-        })
-      }
+      from: jest.fn().mockReturnValue(queries)
     } as unknown as jest.Mocked<SupabaseClient>;
 
     const supabaseService = {
@@ -64,6 +59,10 @@ describe('AthleteService', () => {
       username: 'chrrstian_',
       weight_class: '67.5kg',
       division: 'Junior'
+    }
+
+    user = {
+      id: 'user-uuid'
     }
 
     addToTable = jest.spyOn(service as any, 'addToTable');
@@ -84,7 +83,7 @@ describe('AthleteService', () => {
     const athleteData = {
       weight_class: dto.weight_class,
       division: dto.division,
-      user_id: 'user-uuid'
+      user_id: user.id
     }
 
     const userData = {
@@ -92,63 +91,12 @@ describe('AthleteService', () => {
       username: dto.username
     }
 
-    const call = service.createProfile(dto)
+    const call = service.createProfile(dto, user)
 
     await expect(call).resolves.not.toThrow();
-    expect(supabase.auth.getUser).toHaveBeenCalledTimes(1);
     expect(addToTable).toHaveBeenCalledWith(userData, 'users');
     expect(addToTable).toHaveBeenCalledWith(athleteData, 'athletes');
     expect(addToTable).toHaveBeenCalledTimes(2);
-  });
-
-  it('createProfile should throw an error when getUser returns an auth error code', async () => {
-
-    supabase.auth.getUser = jest.fn().mockResolvedValue({
-      data: null,
-      error: {
-        statusCode: 401,
-        code: 'session_not_found'
-      }
-    })
-
-    const call = service.createProfile(dto)
-
-    await expect(call).rejects.toThrow(new UnauthorizedException('Authentication failed. Please log in again.'));
-    expect(supabase.auth.getUser).toHaveBeenCalledTimes(1);
-    expect(supabase.from('athletes').insert).toHaveBeenCalledTimes(0);
-  });
-
-  it('createProfile should throw an error when getUser returns an unknown error', async () => {
-
-    supabase.auth.getUser = jest.fn().mockResolvedValue({
-      data: null,
-      error: {
-        statusCode: 401,
-        message: 'I failed for some reason',
-        code: '23011'
-      }
-    })
-
-    const call = service.createProfile(dto)
-
-    await expect(call).rejects.toThrow(new InternalServerErrorException(`An unexpected error occured for getUser:
-      23011 - I failed for some reason`));
-    expect(supabase.auth.getUser).toHaveBeenCalledTimes(1);
-    expect(supabase.from('athletes').insert).toHaveBeenCalledTimes(0);
-  });
-
-  it('createProfile should throw an error when getUser returns empty data (no ID)', async () => {
-
-    supabase.auth.getUser = jest.fn().mockResolvedValue({
-      data: {},
-      error: null
-    })
-
-    const call = service.createProfile(dto)
-
-    await expect(call).rejects.toThrow(new MissingIdException());
-    expect(supabase.auth.getUser).toHaveBeenCalledTimes(1);
-    expect(supabase.from('athletes').insert).toHaveBeenCalledTimes(0);
   });
 
   it('createProfile should throw an error when insert returns an error', async () => {
@@ -161,11 +109,10 @@ describe('AthleteService', () => {
       }
     })
 
-    const call = service.createProfile(dto)
+    const call = service.createProfile(dto, user)
 
     await expect(call).rejects.toThrow(new BadRequestException(`An unexpected error occured for insert:
       23505 - I failed`));
-    expect(supabase.auth.getUser).toHaveBeenCalledTimes(1);
     expect(supabase.from('athletes').insert).toHaveBeenCalledTimes(1);
   });
 
@@ -181,7 +128,7 @@ describe('AthleteService', () => {
       throw new Error(`Unexpected table: ${table}`);
     });
 
-    const updateCall = service.updateProfile(dto)
+    const updateCall = service.updateProfile(dto, user)
 
     await expect(updateCall).resolves.not.toThrow();
     expect(supabase.from).toHaveBeenCalledWith('users');
@@ -201,7 +148,7 @@ describe('AthleteService', () => {
       throw new Error(`Unexpected table: ${table}`);
     });
 
-    const updateCall = service.updateProfile(dto)
+    const updateCall = service.updateProfile(dto, user)
 
     await expect(updateCall).resolves.not.toThrow();
     expect(supabase.from).toHaveBeenCalledWith('athletes');
@@ -211,11 +158,10 @@ describe('AthleteService', () => {
 
   it('updateProfile should throw an exception due to more than one DTO field.', async () => {
 
-    const updateCall = service.updateProfile(dto);
+    const updateCall = service.updateProfile(dto, user);
 
     await expect(updateCall).rejects.toThrow(new BadRequestException(
       'Exactly one field must be provided for update.'))
-    expect(supabase.auth.getUser).not.toHaveBeenCalled();
     expect(supabase.from).not.toHaveBeenCalled();
   })
 
@@ -232,38 +178,37 @@ describe('AthleteService', () => {
       }
     })
 
-    const updateCall = service.updateProfile(dto);
+    const updateCall = service.updateProfile(dto, user);
 
     await expect(updateCall).rejects.toThrow(new BadRequestException(
       `An unexpected error occured for update:
       45404 - I failed`))
-    expect(supabase.auth.getUser).toHaveBeenCalled();
     expect(supabase.from('athletes').update).toHaveBeenCalledWith(dto);
   })
 
   it('retrieveProfileDetails should successfully passes the correct query to select for \'users\'', async () => {
-    await service.retrieveProfileDetails(['name', 'username']);
+    await service.retrieveProfileDetails(user, ['name', 'username']);
 
     expect(supabase.from('athletes').select).toHaveBeenCalledWith(`users(name,username)`)
     expect(supabase.from('athletes').select).toHaveBeenCalledTimes(1);
   })
 
   it('retrieveProfileDetails should successfully passes the correct query to select for \'athletes\'', async () => {
-    await service.retrieveProfileDetails(['weight_class', 'division']);
+    await service.retrieveProfileDetails(user, ['weight_class', 'division']);
 
     expect(supabase.from('athletes').select).toHaveBeenCalledWith(`weight_class,division`)
     expect(supabase.from('athletes').select).toHaveBeenCalledTimes(1);
   })
 
   it('retrieveProfileDetails should successfully passes the correct query to select all (no arg)', async () => {
-    await service.retrieveProfileDetails(undefined);
+    await service.retrieveProfileDetails(user, undefined);
 
     expect(supabase.from('athletes').select).toHaveBeenCalledWith('weight_class,division,users(name,username,email)')
     expect(supabase.from('athletes').select).toHaveBeenCalledTimes(1);
   })
 
   it('retrieveProfileDetails should successfully passes the correct query to select all (individual)', async () => {
-    await service.retrieveProfileDetails(['name', 'username', 'email', 'weight_class', 'division']);
+    await service.retrieveProfileDetails(user, ['name', 'username', 'email', 'weight_class', 'division']);
 
     expect(supabase.from('athletes').select).toHaveBeenCalledWith('weight_class,division,users(name,username,email)')
     expect(supabase.from('athletes').select).toHaveBeenCalledTimes(1);

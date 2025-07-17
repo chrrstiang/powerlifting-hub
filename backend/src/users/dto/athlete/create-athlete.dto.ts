@@ -1,5 +1,5 @@
 import { CreateUserDto } from "../create-user.dto";
-import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator'; 
+import { IsOptional, IsString, IsUUID } from 'class-validator'; 
 
 export class CreateAthleteDto extends CreateUserDto {
 

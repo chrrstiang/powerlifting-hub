@@ -29,24 +29,23 @@ export class AthleteService {
    * @param dto The DTO containing the athlete profile data.
    */
   async createProfile(dto: CreateAthleteDto, user: any) {
-
     const user_id = user.id
+
+    // Seperate data for 'athletes' and 'users' table
+    const { name, username, ...athleteFields } = dto;
 
     const { error } = await this.supabase
     .from('users')
-    .update({role: 'Athlete'})
-    .eq('id', user_id)
+    .update({ 
+      role: 'Athlete',
+      name: name,        // Add name to existing user
+      username: username // Add username to existing user
+    })
+    .eq('id', user_id);
 
     if (error) {
       throw new BadRequestException(`Failed to update user role: ${error.code} - ${error.message}`);
     }
-  
-    // Seperate data for 'athletes' and 'users' table
-    const { name, username, ...athleteFields } = dto;
-  
-    // Insert into 'users'
-    const userData = { name, username };
-    await this.addToTable(userData, 'users');
   
     // Insert into 'athletes'
     const athleteData = { ...athleteFields, user_id: user_id };
@@ -81,7 +80,7 @@ export class AthleteService {
       selectQuery = [athletePart, userPart].filter(Boolean).join(',');
     } else {
       // Default: select all relevant fields
-      selectQuery = 'weight_class,division,users(name,username,email)';
+      selectQuery = 'weight_class,division,team,users(name,username,email)';
     }
   
     const { data, error } = await this.supabase

@@ -7,6 +7,8 @@ import { GlobalExceptionFilter } from 'src/common/filters/global-exception-filte
 import { validationExceptionFactory } from 'src/common/validation/pipes/exception-factory';
 import { AthleteService } from 'src/users/service/athlete/athlete.service';
 import { useContainer } from 'class-validator';
+import { SupabaseService } from 'src/supabase/supabase.service';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 /** Test cases:
  * npm run test:e2e athlete.e2e-spec.ts
@@ -36,7 +38,9 @@ import { useContainer } from 'class-validator';
  */
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
-  let athleteService;
+  let athleteService: AthleteService;
+  let supabaseService: SupabaseService;
+  let supabase: SupabaseClient;
   let dto;
   let profileLogin;
 
@@ -69,9 +73,19 @@ describe('AppController (e2e)', () => {
         email: 'testingprofilecreate@gmail.com',
         password: 'test-create-101'
       }
+
+      supabaseService = moduleFixture.get(SupabaseService);
+
+      supabase = supabaseService.getClient()
   });
 
   afterEach(async () => {
+
+    // delete record of createProfile tests' row 
+    const createId = 'e5138b35-d40e-41e3-b238-c26b0c26757f'
+    await supabase.from('users').update({name: null, username: null, role: null}).eq('id', createId);
+    await supabase.from('athletes').delete().eq('user_id', createId);
+
     await app.close();
   })
 
@@ -99,9 +113,30 @@ describe('AppController (e2e)', () => {
     .set('Authorization', `Bearer ${token}`)
     .send(dto);
 
-    console.log(res.body)
-
     expect(res.status).toBe(201);
     expect(res.body.message).toBe('Profile created successfully');
+
+    const { data: user } = await supabase.auth.getUser(token);
+    const id = user?.user?.id;
+
+    const { data, error } = await supabase
+    .from('athletes')
+    .select('weight_class,division,team,users(name,username)')
+    .eq('user_id', id)
+    .single()
+
+    if (error) {
+        throw new Error(error.message)
+    }
+
+    // athlete columns
+    expect(data.division).toEqual(dto.division)
+    expect(data.weight_class).toEqual(dto.weight_class)
+    expect(data.team).toEqual(dto.team)
+
+    // type cast data.users (giving compiling error for some reason)
+    const users = data.users as unknown as { name: string; username: string };
+    expect(users.name).toEqual(dto.name);
+    expect(users.username).toEqual(dto.username);
   })
 });

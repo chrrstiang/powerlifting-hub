@@ -21,7 +21,7 @@ export class AthleteController {
   @HttpCode(201)
   async createProfile(@Body() createAthleteDto: CreateAthleteDto, @Req() req) {
     const user = req.user
-    this.athleteService.createProfile(createAthleteDto, user);
+    await this.athleteService.createProfile(createAthleteDto, user);
     return { message: 'Profile created successfully' }
   }
 

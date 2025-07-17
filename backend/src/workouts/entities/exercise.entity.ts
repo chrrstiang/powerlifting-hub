@@ -1,5 +1,3 @@
-import { LoadRange } from "src/common/types/load-range.class";
-
 export class Exercise {
 
     constructor(id: number,
@@ -9,7 +7,6 @@ export class Exercise {
         public reps: number,
         public intensity: number,
         public actualIntensity: number,
-        public loadRange: LoadRange,
         public actualLoad: number) {
         }
 }

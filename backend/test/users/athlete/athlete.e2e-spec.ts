@@ -13,11 +13,11 @@ import { SupabaseClient } from '@supabase/supabase-js';
 /** Test cases:
  * npm run test:e2e athlete.e2e-spec.ts
  * --- Create Profile ---
- * - Successful with all fields
- * - Successful with only required fields
- * - Successful with a few optional fields
- * - Fail due to missing required field
- * - Fail due to taken username
+ * - Successful with all fields -- line 92
+ * - Successful with only required fields -- line 144
+ * - Successful with a few optional fields -- line 191
+ * - Fail due to missing required field -- line 239
+ * - Fail due to taken username -- line 266
  * - Fail due to invalid weight class
  * - Fail due to invalid federation
  * - Fail due to invalid division
@@ -89,7 +89,7 @@ describe('AppController (e2e)', () => {
     await app.close();
   })
 
-  it('createProfile successfully creates athletes record and updates user record with all possible fields', async () => {
+  it('POST /athlete/profile successfully creates athletes record and updates user record with all possible fields', async () => {
 
     const login = await request(app.getHttpServer())
     .post('/auth/login')
@@ -121,7 +121,7 @@ describe('AppController (e2e)', () => {
 
     const { data, error } = await supabase
     .from('athletes')
-    .select('weight_class,division,team,users(name,username)')
+    .select('weight_class,division,team,users(name,username,role)')
     .eq('user_id', id)
     .single()
 
@@ -135,8 +135,158 @@ describe('AppController (e2e)', () => {
     expect(data.team).toEqual(dto.team)
 
     // type cast data.users (giving compiling error for some reason)
-    const users = data.users as unknown as { name: string; username: string };
+    const users = data.users as unknown as { name: string; username: string, role: string };
     expect(users.name).toEqual(dto.name);
     expect(users.username).toEqual(dto.username);
+    expect(users.role).toEqual('Athlete')
+  })
+
+  it('POST /athlete/profile successfully creates athletes record and updates user record with only required fields', async () => {
+
+    const login = await request(app.getHttpServer())
+    .post('/auth/login')
+    .send(profileLogin)
+
+    expect(login.status).toBe(200);
+    expect(login.body.message).toBe('Login successful');
+
+    const token = login.body.access_token;
+
+    dto = {
+        name: 'christian',
+        username: 'chrrstian'
+    }
+
+    const res = await request(app.getHttpServer())
+    .post('/athlete/profile')
+    .set('Authorization', `Bearer ${token}`)
+    .send(dto);
+
+    expect(res.status).toBe(201);
+    expect(res.body.message).toBe('Profile created successfully');
+
+    const { data: user } = await supabase.auth.getUser(token);
+    const id = user?.user?.id;
+
+    const { data, error } = await supabase
+    .from('athletes')
+    .select('user_id,users(name,username,role)')
+    .eq('user_id', id)
+    .single()
+
+    if (error) {
+        throw new Error(error.message)
+    }
+
+    // 'athletes' record still created
+    expect(data.user_id).toEqual(id);
+
+    // type cast again, checking users columns
+    const users = data.users as unknown as { name: string; username: string, role: string };
+    expect(users.name).toEqual(dto.name);
+    expect(users.username).toEqual(dto.username);
+    expect(users.role).toEqual('Athlete')
+  })
+
+  it('POST /athlete/profile successfully creates athletes record and updates user record with a few optional fields', async () => {
+
+    const login = await request(app.getHttpServer())
+    .post('/auth/login')
+    .send(profileLogin)
+
+    expect(login.status).toBe(200);
+    expect(login.body.message).toBe('Login successful');
+
+    const token = login.body.access_token;
+
+    dto = {
+        name: 'christian',
+        username: 'chrrstian',
+        division: "Men's Junior"
+    }
+
+    const res = await request(app.getHttpServer())
+    .post('/athlete/profile')
+    .set('Authorization', `Bearer ${token}`)
+    .send(dto);
+
+    expect(res.status).toBe(201);
+    expect(res.body.message).toBe('Profile created successfully');
+
+    const { data: user } = await supabase.auth.getUser(token);
+    const id = user?.user?.id;
+
+    const { data, error } = await supabase
+    .from('athletes')
+    .select('user_id, division, users(name,username,role)')
+    .eq('user_id', id)
+    .single()
+
+    if (error) {
+        throw new Error(error.message)
+    }
+
+    expect(data.user_id).toEqual(id);
+    expect(data.division).toEqual(dto.division)
+
+    // type cast again, checking users columns
+    const users = data.users as unknown as { name: string; username: string, role: string };
+    expect(users.name).toEqual(dto.name);
+    expect(users.username).toEqual(dto.username);
+    expect(users.role).toEqual('Athlete')
+  })
+
+  it('POST /athlete/profile fails due to missing required field (no name)', async () => {
+    const login = await request(app.getHttpServer())
+    .post('/auth/login')
+    .send(profileLogin)
+
+    expect(login.status).toBe(200);
+    expect(login.body.message).toBe('Login successful');
+
+    const token = login.body.access_token;
+
+    dto = {
+        username: 'chrrstian',
+        weight_class: '67.5kg',
+        division: "Men's Junior",
+        team: "Northeastern Powerlifting"
+    }
+
+    const res = await request(app.getHttpServer())
+    .post('/athlete/profile')
+    .set('Authorization', `Bearer ${token}`)
+    .send(dto);
+
+    expect(res.status).toBe(400);
+    // can't predict exact message, but checks to see if message is about the name.
+    expect(res.body.message).toContain('name');
+  })
+
+  it('POST /athlete/profile fails due to taken username', async () => {
+    const login = await request(app.getHttpServer())
+    .post('/auth/login')
+    .send(profileLogin)
+
+    expect(login.status).toBe(200);
+    expect(login.body.message).toBe('Login successful');
+
+    const token = login.body.access_token;
+
+    dto = {
+        name: 'christian',
+        username: 'username-alr-taken',
+        weight_class: '67.5kg',
+        division: "Men's Junior",
+        team: "Northeastern Powerlifting"
+    }
+
+    const res = await request(app.getHttpServer())
+    .post('/athlete/profile')
+    .set('Authorization', `Bearer ${token}`)
+    .send(dto);
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toContain('Username is already taken');
   })
 });

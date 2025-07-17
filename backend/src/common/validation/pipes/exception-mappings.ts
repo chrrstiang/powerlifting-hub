@@ -12,6 +12,7 @@ export const VALIDATION_EXCEPTION_MAPPINGS = {
     'password.matches': () => new UnprocessableEntityException('Password must contain at least one uppercase letter, one lowercase letter, and one number'),
     'username.isAlphanumeric': () => new BadRequestException('Username can only contain letters and numbers'),
     'username.isLength': () => new BadRequestException('Username must be between 3 and 20 characters'),
+    'username.isUnique': () => new BadRequestException('Username is already taken'),
     'age.min': () => new BadRequestException('Must be at least 18 years old'),
     'age.max': () => new BadRequestException('Age cannot exceed 120'),
     'phone.isMobilePhone': () => new UnprocessableEntityException('Invalid phone number format'),

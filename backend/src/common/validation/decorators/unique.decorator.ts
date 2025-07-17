@@ -7,7 +7,7 @@ export function IsUnique(
     validationOptions?: ValidationOptions) {
     return function(object: Object, propertyName: string) {
         registerDecorator({
-            name: 'IsUnique',
+            name: 'isUnique',
             target: object.constructor,
             propertyName,
             options: validationOptions,

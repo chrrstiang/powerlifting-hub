@@ -9,6 +9,6 @@ export class CreateUserDto {
 
   @IsNotEmpty()
   @IsString()
-  @IsUnique('users', 'username', { message: "Username is already taken"})
+  @IsUnique('users', 'username')
   username: string;
 }

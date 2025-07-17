@@ -38,17 +38,24 @@ export class AthleteService {
     .from('users')
     .update({ 
       role: 'Athlete',
-      name: name,        // Add name to existing user
-      username: username // Add username to existing user
+      name: name,
+      username: username
     })
     .eq('id', user_id);
 
     if (error) {
       throw new BadRequestException(`Failed to update user role: ${error.code} - ${error.message}`);
     }
+
+    let athleteData;
   
-    // Insert into 'athletes'
-    const athleteData = { ...athleteFields, user_id: user_id };
+    // determines what data is going into 'athletes' table
+    if (Object.keys(athleteFields).length === 0) {
+      athleteData = {user_id: user_id}
+    } else {
+      athleteData = { ...athleteFields , user_id: user_id };
+    }
+
     await this.addToTable(athleteData, 'athletes');
   }
 

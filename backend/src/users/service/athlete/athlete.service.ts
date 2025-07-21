@@ -22,6 +22,7 @@ export class AthleteService {
     }
     this.supabase = this.supabaseService.getClient()
   }
+
   
   /** Inserts a row into the 'athletes' table with the data contained in the
    * DTO. Additionally, the name and username of the DTO are stored in the 'users' table.
@@ -29,34 +30,49 @@ export class AthleteService {
    * @param dto The DTO containing the athlete profile data.
    */
   async createProfile(dto: CreateAthleteDto, user: any) {
-    const user_id = user.id
+    const user_id = user.id;
 
-    // Seperate data for 'athletes' and 'users' table
-    const { name, username, ...athleteFields } = dto;
+    this.validateCreateDTO(dto);
+
+    let athleteData: AthleteData = {user_id};
+
+    if (dto.federation) {
+      athleteData.federation_id = await this.findFederation(dto.federation);
+
+      if (dto.division) {
+        athleteData.division_id = await this.findDivision(athleteData.federation_id!, dto.division);
+      }
+  
+      if (dto.weight_class) {
+        athleteData.weight_class_id = await this.findWeightClass(athleteData.federation_id!, dto.gender, dto.weight_class);
+      }
+    }
+
+    if (dto.team) {
+      athleteData.team = dto.team;
+    }
+
+    const { name, username, gender, date_of_birth, ...athleteFields} = dto;
 
     const { error } = await this.supabase
     .from('users')
     .update({ 
-      role: 'Athlete',
       name: name,
-      username: username
+      username: username,
+      gender: gender,
+      date_of_birth: date_of_birth,
+      role: 'Athlete'
     })
     .eq('id', user_id);
 
     if (error) {
-      throw new BadRequestException(`Failed to update user role: ${error.code} - ${error.message}`);
+      throw new BadRequestException(`Failed to update user upon profile completion: ${error.code} - ${error.message}`);
     }
 
-    let athleteData;
-  
-    // determines what data is going into 'athletes' table
-    if (Object.keys(athleteFields).length === 0) {
-      athleteData = {user_id: user_id}
-    } else {
-      athleteData = { ...athleteFields , user_id: user_id };
-    }
+    athleteData.user_id = user_id;
 
     await this.addToTable(athleteData, 'athletes');
+
   }
 
   /** Queries the database for the row with the same user_id as the current authenticated
@@ -153,5 +169,67 @@ export class AthleteService {
   private handleSupabaseError(error: PostgrestError, operation: string) {
     throw new BadRequestException(`An unexpected error occured for ${operation}:
       ${error.code} - ${error.message}`);
+  }
+
+  // searches for the weight class with the given federation id, gender, and weight class name.
+  // if found, returns id. if not, throws exception.
+  private async findWeightClass(fedId: string, gender: string, className: string) {
+    const { data, error } = await this.supabase
+    .from('weight_classes')
+    .select('id')
+    .eq('federation_id', fedId)
+    .eq('gender', gender)
+    .eq('class_name', className)
+    .single()
+
+    if (error || !data) {
+      throw new BadRequestException(`Weight class is invalid: ${error.code} - ${error.message}`)
+    }
+
+    return data.id;
+  }
+
+  // searches for federation using the federation code given, returns id if found.
+  private async findDivision(fedId: string, divisionName: string) {
+    const { data, error } = await this.supabase
+    .from('divisions')
+    .select('id')
+    .eq('federations', fedId)
+    .eq('division_name', divisionName)
+    .single()
+
+    if (error || !data) {
+      throw new BadRequestException(`Federation is invalid: ${error.code} - ${error.message}`);
+    }
+
+    return data.id;
+  }
+
+  // searches for federation using the federation code given, returns id if found.
+  private async findFederation(federationCode: string) {
+    const { data, error } = await this.supabase
+    .from('federations')
+    .select('id')
+    .eq('code', federationCode)
+    .single()
+
+    if (error || !data) {
+      throw new BadRequestException(`Federation is invalid: ${error.code} - ${error.message}`);
+    }
+
+    return data.id;
+  }
+
+  // ensures that necessary fields are present in order to insert given fields with confidence.
+  // Ex. We can't confirm someone's weight class unless they confirm their gender and their federation,
+  // so we check to make sure those fields are present.
+  private validateCreateDTO(dto: CreateAthleteDto) {
+    if (dto.weight_class && !dto.federation) {
+      throw new BadRequestException(`Weight class requires a federation`);
+    } else if (dto.weight_class && !dto.gender) {
+      throw new BadRequestException(`Weight class requires a gender`);
+    } else if (dto.division && !dto.federation) {
+      throw new BadRequestException(`Division requires a federation`);
+    }
   }
 }

@@ -1,3 +1,4 @@
+import { Gender } from 'src/users/dto/create-user.dto';
 import { AthleteController } from './athlete.controller';
 import { AthleteService } from 'src/users/service/athlete/athlete.service';
 
@@ -32,6 +33,8 @@ describe('AthleteController', () => {
     const dto = {
       name: 'Christian',
       username: 'chrrstian_',
+      gender: Gender.MALE,
+      date_of_birth: '2005-11-22',
       weight_class: '67.5kg',
       division: 'Junior',
       team: 'Northeastern Powerlifting',
@@ -49,6 +52,12 @@ describe('AthleteController', () => {
     expect(result).resolves.toEqual({
       name: 'christian', username: 'chrrstian', weight_class: '67.5kg'
     });
+  });
+
+  it('should return profile data from service', async () => {
+    const result = controller.retrieveProfileDetails(request, undefined);
+    
+    expect(athleteService.retrieveProfileDetails).toHaveBeenCalledWith(request.user, undefined);
   });
 
   it('controller.updateProfile makes correct calls and returns', async () => {

@@ -3,6 +3,7 @@ import { AthleteService } from './athlete.service';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { MissingIdException } from 'src/common/exceptions/missing-id';
 import { SupabaseService } from 'src/supabase/supabase.service';
+import { Gender } from 'src/users/dto/create-user.dto';
 
 /** Unit tests for Athlete Service class:
  * 
@@ -30,6 +31,20 @@ describe('AthleteService', () => {
       }),
       select: jest.fn().mockReturnValue({
         eq: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({
+                data: {
+                  id: 'weight-class-id'
+                }
+              })
+            }),
+            single: jest.fn().mockResolvedValue({
+              data: {
+                id : 'division-id'
+              }
+            })
+          }),
           single: jest.fn().mockResolvedValue({
             data: {
               name: 'christian',
@@ -40,7 +55,7 @@ describe('AthleteService', () => {
         })
       }),
       update: jest.fn().mockReturnValue({
-        eq: jest.fn().mockResolvedValue({ data: {}, error: null }),
+        eq: jest.fn().mockResolvedValue({ data: {id: 'Some id'}, error: null }),
       }) 
     }
 
@@ -57,6 +72,9 @@ describe('AthleteService', () => {
     dto = {
       name: 'Christian',
       username: 'chrrstian_',
+      gender: Gender.MALE,
+      date_of_birth: '2005-11-22',
+      federation: "IPF",
       weight_class: '67.5kg',
       division: 'Junior'
     }
@@ -78,25 +96,33 @@ describe('AthleteService', () => {
     mockEq = jest.fn().mockResolvedValue({ error: null });
   });
 
-  it('createProfile should successfully call getUser which contains data and call addToTable', async () => {
+  it('createProfile should succeed and call addToTable', async () => {
+
+    const findFed = jest.spyOn(service as any, 'findFederation').mockResolvedValue('fed-id');
+    const findDiv = jest.spyOn(service as any, 'findDivision').mockResolvedValue('div-id');
+    const findWC = jest.spyOn(service as any, 'findWeightClass').mockResolvedValue('wc-id');
 
     const athleteData = {
-      weight_class: dto.weight_class,
-      division: dto.division,
+      federation_id: 'fed-id',
+      weight_class_id: 'wc-id',
+      division_id: 'div-id',
       user_id: user.id
     }
 
     const userData = {
       name: dto.name,
-      username: dto.username
+      username: dto.username,
+      gender: dto.gender,
+      date_of_birth: dto.date_of_birth,
+      role: 'Athlete'
     }
 
     const call = service.createProfile(dto, user)
 
     await expect(call).resolves.not.toThrow();
-    expect(addToTable).toHaveBeenCalledWith(userData, 'users');
+    expect(supabase.from('users').update).toHaveBeenCalledWith(userData);
     expect(addToTable).toHaveBeenCalledWith(athleteData, 'athletes');
-    expect(addToTable).toHaveBeenCalledTimes(2);
+    expect(addToTable).toHaveBeenCalledTimes(1);
   });
 
   it('createProfile should throw an error when insert returns an error', async () => {
@@ -104,7 +130,7 @@ describe('AthleteService', () => {
     supabase.from('athletes').insert = jest.fn().mockResolvedValue({
       data: null,
       error: {
-        message: 'I failed',
+        message: 'I failed to insert',
         code: '23505'
       }
     })
@@ -112,8 +138,27 @@ describe('AthleteService', () => {
     const call = service.createProfile(dto, user)
 
     await expect(call).rejects.toThrow(new BadRequestException(`An unexpected error occured for insert:
-      23505 - I failed`));
+      23505 - I failed to insert`));
     expect(supabase.from('athletes').insert).toHaveBeenCalledTimes(1);
+  });
+
+  it('createProfile should throw an error when update returns an error', async () => {
+
+    const dto = {name: 'name', username: 'user', gender: Gender.MALE, 
+      date_of_birth: '2005-11-22'}
+
+    supabase.from('users').update(dto).eq = jest.fn().mockResolvedValue({
+      data: null,
+      error: {
+        message: 'I failed to update',
+        code: '23505'
+      }
+    })
+
+    const call = service.createProfile(dto, user)
+
+    await expect(call).rejects.toThrow(new BadRequestException(`Failed to update user upon profile completion: 23505 - I failed to update`));
+    expect(supabase.from('users').update(dto).eq).toHaveBeenCalledTimes(1);
   });
 
   it('updateProfile should successfully call update on \'users\' without throwing any errors', async () => {
@@ -203,14 +248,14 @@ describe('AthleteService', () => {
   it('retrieveProfileDetails should successfully passes the correct query to select all (no arg)', async () => {
     await service.retrieveProfileDetails(user, undefined);
 
-    expect(supabase.from('athletes').select).toHaveBeenCalledWith('weight_class,division,users(name,username,email)')
+    expect(supabase.from('athletes').select).toHaveBeenCalledWith('weight_class,division,team,users(name,username,email)')
     expect(supabase.from('athletes').select).toHaveBeenCalledTimes(1);
   })
 
   it('retrieveProfileDetails should successfully passes the correct query to select all (individual)', async () => {
-    await service.retrieveProfileDetails(user, ['name', 'username', 'email', 'weight_class', 'division']);
+    await service.retrieveProfileDetails(user, ['name', 'username', 'email', 'weight_class', 'division', 'team']);
 
-    expect(supabase.from('athletes').select).toHaveBeenCalledWith('weight_class,division,users(name,username,email)')
+    expect(supabase.from('athletes').select).toHaveBeenCalledWith('weight_class,division,team,users(name,username,email)')
     expect(supabase.from('athletes').select).toHaveBeenCalledTimes(1);
   })
 

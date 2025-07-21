@@ -2,13 +2,13 @@ import { ValidationArguments, ValidatorConstraint, ValidatorConstraintInterface 
 import { Injectable } from "@nestjs/common";
 import { SupabaseService } from "src/supabase/supabase.service";
 
-/** This validator is responsible for checking that the given value is unique, 
+/** This validator is responsible for checking that the given value exists, 
  * in the context of the given table and column. If true, the validator passes.
  * 
  */
-@ValidatorConstraint({name: 'IsUnique', async: true})
+@ValidatorConstraint({name: 'ValueExists', async: true})
 @Injectable()
-export class IsUniqueValidator implements ValidatorConstraintInterface {
+export class ValueExistsValidator implements ValidatorConstraintInterface {
     constructor(private readonly supabaseService: SupabaseService) {}
 
     async validate(
@@ -27,10 +27,18 @@ export class IsUniqueValidator implements ValidatorConstraintInterface {
         .eq(column, value)
         .maybeSingle() as any;
 
+        if (data) {
+            return true;
+        }
+        
         return !data;
     }
     defaultMessage?(validationArguments?: ValidationArguments): string {
-        return`${validationArguments?.property} must be unique`
+        if (!validationArguments?.constraints || validationArguments.constraints.length < 2) {
+            return `${validationArguments?.property} is not a valid value.`;
+        }
+        const [column] = validationArguments?.constraints
+        return`${validationArguments?.property} is not a valid value for ${column}.`
     }
     
 }

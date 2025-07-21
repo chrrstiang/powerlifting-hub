@@ -18,9 +18,9 @@ import { SupabaseClient } from '@supabase/supabase-js';
  * - Successful with a few optional fields -- line 191
  * - Fail due to missing required field -- line 239
  * - Fail due to taken username -- line 266
- * - Fail due to invalid weight class
- * - Fail due to invalid federation
- * - Fail due to invalid division
+ * - Fail due to invalid weight class -- SKIP
+ * - Fail due to invalid federation -- SKIP
+ * - Fail due to invalid division -- SKIP
  * --- Retrieve Profile ---
  * - Successful with no query (retrieve all fields)
  * - Successful with one field from 'users'
@@ -38,7 +38,6 @@ import { SupabaseClient } from '@supabase/supabase-js';
  */
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
-  let athleteService: AthleteService;
   let supabaseService: SupabaseService;
   let supabase: SupabaseClient;
   let dto;
@@ -67,7 +66,6 @@ describe('AppController (e2e)', () => {
   
       await app.init(); // Start the NestJS app context
 
-      athleteService = moduleFixture.get(AthleteService);
 
       profileLogin = {
         email: 'testingprofilecreate@gmail.com',

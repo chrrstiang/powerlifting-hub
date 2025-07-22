@@ -6,7 +6,7 @@ import { SupabaseService } from "src/supabase/supabase.service";
  * in the context of the given table and column. If true, the validator passes.
  * 
  */
-@ValidatorConstraint({name: 'ValueExists', async: true})
+@ValidatorConstraint({name: 'valueExists', async: true})
 @Injectable()
 export class ValueExistsValidator implements ValidatorConstraintInterface {
     constructor(private readonly supabaseService: SupabaseService) {}
@@ -31,7 +31,7 @@ export class ValueExistsValidator implements ValidatorConstraintInterface {
         .select('id')
         .eq(column, value);
 
-        if (data) {
+        if (data.length > 0) {
             return true;
         }
         

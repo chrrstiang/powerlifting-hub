@@ -10,9 +10,10 @@ export const VALIDATION_EXCEPTION_MAPPINGS = {
     'email.isNotEmpty': () => new BadRequestException('Email address is required'),
     'password.minLength': () => new UnprocessableEntityException('Password must be at least 8 characters long'),
     'password.matches': () => new UnprocessableEntityException('Password must contain at least one uppercase letter, one lowercase letter, and one number'),
-    'username.isAlphanumeric': () => new BadRequestException('Username can only contain letters and numbers'),
+    'username.matches': () => new BadRequestException('Username can only contain letters, numbers, underscores and periods'),
     'username.isLength': () => new BadRequestException('Username must be between 3 and 20 characters'),
     'username.isUnique': () => new BadRequestException('Username is already taken'),
+    'username.isLowercase': () => new BadRequestException('Username must be lowercase'),
     'age.min': () => new BadRequestException('Must be at least 18 years old'),
     'age.max': () => new BadRequestException('Age cannot exceed 120'),
     'phone.isMobilePhone': () => new UnprocessableEntityException('Invalid phone number format'),
@@ -31,4 +32,5 @@ export const VALIDATION_EXCEPTION_MAPPINGS = {
     'isEnum': (property: string) => new BadRequestException(`${property} must be a valid option`),
     'arrayMinSize': (property: string) => new BadRequestException(`${property} must contain at least one item`),
     'arrayMaxSize': (property: string) => new BadRequestException(`${property} contains too many items`),
+    'valueExists': (property: string) => new BadRequestException(`${property} does not exist`)
   } as const;

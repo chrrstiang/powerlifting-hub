@@ -12,32 +12,19 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { Gender } from 'src/users/dto/create-user.dto';
 
 /** Test cases:
- * npm run test:e2e athlete.e2e-spec.ts
+ * npm run test:e2e athlete-create.e2e
  * --- Create Profile ---
- * - Successful with all fields -- line 92
- * - Successful with only required fields -- line 144
- * - Successful with a few optional fields -- line 191
- * - Fail due to missing required field -- line 239
- * - Fail due to taken username -- line 266
- * - Fail due to invalid weight class -- SKIP
- * - Fail due to invalid federation -- SKIP
- * - Fail due to invalid division -- SKIP
- * --- Retrieve Profile ---
- * - Successful with no query (retrieve all fields)
- * - Successful with one field from 'users'
- * - Successul with one field from 'athletes'
- * - Fail due to invalid columns in query
- * - Fail due to user not being found
- * --- Update Profile ---
- * - Successful update of 'users' table column
- * - Successul update of 'athletes' table column
- * - Fail due to username already being taken
- * - Fail due to invalid weight class
- * - Fail due to invalid division
- * - Fail due to invalid federation
- * 
+ * - Successful with all fields -- line 119
+ * - Successful with only required fields -- line 189
+ * - Successful with a few optional fields -- line 232
+ * - Fail due to missing required users field -- line 284
+ * - Fail due to taken username -- line 304
+ * - Fail due to invalid weight class -- 317
+ * - Fail due to invalid federation -- 330
+ * - Fail due to invalid division -- 343
+ * - Fail due to invalid username (includes spaces) -- line 357
  */
-describe('AppController (e2e)', () => {
+describe('Athlete profile (POST) (e2e)', () => {
   let app: INestApplication<App>;
   let supabaseService: SupabaseService;
   let supabase: SupabaseClient;
@@ -172,27 +159,27 @@ describe('AppController (e2e)', () => {
     expect(expectedDiv).toEqual(actualDiv)
     expect(expectedWeightClass).toEqual(actualWeightClass);
 
-    // type cast data.users (giving compiling error for some reason)
-    const users = data.users as unknown as { name: string; username: string, role: string };
+    // type cast again, checking users columns
+    const users = data?.users as unknown as { 
+        name: string; 
+        username: string, 
+        role: string, 
+        gender: Gender, 
+        date_of_birth: string };
     expect(users.name).toEqual(dto.name);
     expect(users.username).toEqual(dto.username);
     expect(users.role).toEqual('Athlete')
+    expect(users.gender).toEqual(dto.gender);
+    expect(users.date_of_birth).toEqual(dto.date_of_birth);
   })
-/*
+
   it('POST /athlete/profile successfully creates athletes record and updates user record with only required fields', async () => {
-
-    const login = await request(app.getHttpServer())
-    .post('/auth/login')
-    .send(profileLogin)
-
-    expect(login.status).toBe(200);
-    expect(login.body.message).toBe('Login successful');
-
-    const token = login.body.access_token;
 
     dto = {
         name: 'christian',
-        username: 'chrrstian'
+        username: 'chrrstian',
+        gender: Gender.FEMALE,
+        date_of_birth: '1999-10-22'
     }
 
     const res = await request(app.getHttpServer())
@@ -208,39 +195,36 @@ describe('AppController (e2e)', () => {
 
     const { data, error } = await supabase
     .from('athletes')
-    .select('user_id,users(name,username,role)')
+    .select('user_id,users(name,username,gender,role,date_of_birth)')
     .eq('user_id', id)
     .single()
 
-    if (error) {
-        throw new Error(error.message)
-    }
-
     // 'athletes' record still created
-    expect(data.user_id).toEqual(id);
+    expect(data?.user_id).toEqual(id);
 
     // type cast again, checking users columns
-    const users = data.users as unknown as { name: string; username: string, role: string };
+    const users = data?.users as unknown as { 
+        name: string; 
+        username: string, 
+        role: string, 
+        gender: Gender, 
+        date_of_birth: string };
     expect(users.name).toEqual(dto.name);
     expect(users.username).toEqual(dto.username);
     expect(users.role).toEqual('Athlete')
+    expect(users.gender).toEqual(dto.gender);
+    expect(users.date_of_birth).toEqual(dto.date_of_birth);
   })
 
   it('POST /athlete/profile successfully creates athletes record and updates user record with a few optional fields', async () => {
 
-    const login = await request(app.getHttpServer())
-    .post('/auth/login')
-    .send(profileLogin)
-
-    expect(login.status).toBe(200);
-    expect(login.body.message).toBe('Login successful');
-
-    const token = login.body.access_token;
-
     dto = {
         name: 'christian',
         username: 'chrrstian',
-        division: "Men's Junior"
+        gender: Gender.MALE,
+        date_of_birth: '2005-11-22',
+        federation: 'IPF',
+        division: "Junior"
     }
 
     const res = await request(app.getHttpServer())
@@ -254,41 +238,44 @@ describe('AppController (e2e)', () => {
     const { data: user } = await supabase.auth.getUser(token);
     const id = user?.user?.id;
 
-    const { data, error } = await supabase
+    const { data } = await supabase
     .from('athletes')
-    .select('user_id, division, users(name,username,role)')
+    .select('user_id, division_id, federation_id, users(name,username,gender)')
     .eq('user_id', id)
     .single()
 
-    if (error) {
-        throw new Error(error.message)
-    }
+    const federation = await supabase
+    .from('federations')
+    .select('id')
+    .eq('code', dto.federation)
+    .single();
 
-    expect(data.user_id).toEqual(id);
-    expect(data.division).toEqual(dto.division)
+    const division = await supabase
+    .from('divisions')
+    .select('id')
+    .eq('federation_id', federation.data?.id)
+    .eq('division_name', dto.division)
+    .single()
 
-    // type cast again, checking users columns
-    const users = data.users as unknown as { name: string; username: string, role: string };
-    expect(users.name).toEqual(dto.name);
-    expect(users.username).toEqual(dto.username);
-    expect(users.role).toEqual('Athlete')
+    const expectedFed = federation.data?.id
+    const actualFed = data?.federation_id;
+    const expectedDiv = division.data?.id;
+    const actualDiv = data?.division_id;
+
+    // check if expected federation id equals actual
+    expect(expectedFed).toEqual(actualFed)
+    expect(expectedDiv).toEqual(actualDiv)
+    expect(data?.user_id).toEqual(id);
   })
-
-  it('POST /athlete/profile fails due to missing required field (no name)', async () => {
-    const login = await request(app.getHttpServer())
-    .post('/auth/login')
-    .send(profileLogin)
-
-    expect(login.status).toBe(200);
-    expect(login.body.message).toBe('Login successful');
-
-    const token = login.body.access_token;
+  
+  it('POST /athlete/profile fails due to missing required users field (no name)', async () => {
 
     dto = {
         username: 'chrrstian',
+        gender: Gender.GENDER_FLUID,
+        date_of_birth: '2005-11-22',
         weight_class: '67.5kg',
-        division: "Men's Junior",
-        team: "Northeastern Powerlifting"
+        division: "Junior"
     }
 
     const res = await request(app.getHttpServer())
@@ -297,27 +284,13 @@ describe('AppController (e2e)', () => {
     .send(dto);
 
     expect(res.status).toBe(400);
-    // can't predict exact message, but checks to see if message is about the name.
+    // can't predict exact message (failed validator varies), but checks to see if message is about the name.
     expect(res.body.message).toContain('name');
   })
 
   it('POST /athlete/profile fails due to taken username', async () => {
-    const login = await request(app.getHttpServer())
-    .post('/auth/login')
-    .send(profileLogin)
 
-    expect(login.status).toBe(200);
-    expect(login.body.message).toBe('Login successful');
-
-    const token = login.body.access_token;
-
-    dto = {
-        name: 'christian',
-        username: 'username-alr-taken',
-        weight_class: '67.5kg',
-        division: "Men's Junior",
-        team: "Northeastern Powerlifting"
-    }
+    dto.username = 'username_alr_taken';
 
     const res = await request(app.getHttpServer())
     .post('/athlete/profile')
@@ -327,5 +300,55 @@ describe('AppController (e2e)', () => {
     expect(res.status).toBe(400);
     expect(res.body.message).toContain('Username is already taken');
   })
-    */
+
+  it('POST /athlete/profile fails due to non-existent weight class input', async () => {
+
+    dto.weight_class = 'I am not real';
+
+    const res = await request(app.getHttpServer())
+    .post('/athlete/profile')
+    .set('Authorization', `Bearer ${token}`)
+    .send(dto);
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe('weight_class does not exist');
+  })
+
+  it('POST /athlete/profile fails due to non-existent division input', async () => {
+
+    dto.division = 'I am not real';
+
+    const res = await request(app.getHttpServer())
+    .post('/athlete/profile')
+    .set('Authorization', `Bearer ${token}`)
+    .send(dto);
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe('division does not exist');
+  })
+
+  it('POST /athlete/profile fails due to non-existent federation input', async () => {
+
+    dto.federation = 'I am not real';
+
+    const res = await request(app.getHttpServer())
+    .post('/athlete/profile')
+    .set('Authorization', `Bearer ${token}`)
+    .send(dto);
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe('federation does not exist');
+  })
+
+  it('POST /athlete/profile fails due to invalid username (includes spaces)', async () => {
+    dto.username = "i can't be a username";
+
+    const res = await request(app.getHttpServer())
+    .post('/athlete/profile')
+    .set('Authorization', `Bearer ${token}`)
+    .send(dto);
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe('Username can only contain letters, numbers, underscores and periods');
+  })
 });

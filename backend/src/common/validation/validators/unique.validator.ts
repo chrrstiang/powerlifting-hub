@@ -6,7 +6,7 @@ import { SupabaseService } from "src/supabase/supabase.service";
  * in the context of the given table and column. If true, the validator passes.
  * 
  */
-@ValidatorConstraint({name: 'IsUnique', async: true})
+@ValidatorConstraint({name: 'isUnique', async: true})
 @Injectable()
 export class IsUniqueValidator implements ValidatorConstraintInterface {
     constructor(private readonly supabaseService: SupabaseService) {}

@@ -344,14 +344,14 @@ describe('AthleteService', () => {
   it('retrieveProfileDetails should successfully passes the correct query to select all (no arg)', async () => {
     await service.retrieveProfileDetails(user, undefined);
 
-    expect(supabase.from('athletes').select).toHaveBeenCalledWith('weight_class,division,team,users(name,username,email)')
+    expect(supabase.from('athletes').select).toHaveBeenCalledWith("federation,weight_class,division,users(name,username,email,gender,date_of_birth,role)")
     expect(supabase.from('athletes').select).toHaveBeenCalledTimes(1);
   })
 
   it('retrieveProfileDetails should successfully passes the correct query to select all (individual)', async () => {
     await service.retrieveProfileDetails(user, ['name', 'username', 'email', 'weight_class', 'division', 'team']);
 
-    expect(supabase.from('athletes').select).toHaveBeenCalledWith('weight_class,division,team,users(name,username,email)')
+    expect(supabase.from('athletes').select).toHaveBeenCalledWith('weight_class,division,users(name,username,email)')
     expect(supabase.from('athletes').select).toHaveBeenCalledTimes(1);
   })
 

@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsEnum, IsDateString } from 'class-validator'
+import { IsString, IsNotEmpty, IsEnum, IsDateString, IsLowercase, Matches, Length } from 'class-validator'
 import { IsUnique } from 'src/common/validation/decorators/unique.decorator';
 
 export enum Gender {
@@ -16,6 +16,9 @@ export class CreateUserDto {
 
   @IsNotEmpty()
   @IsString()
+  @IsLowercase()
+  @Matches(/^[a-z0-9._]+$/)
+  @Length(3, 30)
   @IsUnique('users', 'username')
   username: string;
 

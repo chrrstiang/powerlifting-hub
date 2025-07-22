@@ -19,7 +19,7 @@ export class AthleteController {
   @Post('profile')
   @UseGuards(JwtAuthGuard)
   @HttpCode(201)
-  async createProfile(@Body() createAthleteDto: CreateAthleteDto, @Req() req) {
+  async createProfile(@Body() createAthleteDto: CreateAthleteDto, @Req() req: any) {
     const user = req.user
     await this.athleteService.createProfile(createAthleteDto, user);
     return { message: 'Profile created successfully' }

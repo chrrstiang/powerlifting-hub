@@ -4,6 +4,8 @@ import { CoachController } from './controller/coach/coach.controller';
 import { AthleteService } from './service/athlete/athlete.service';
 import { CoachService } from './service/coach/coach.service';
 import { SupabaseService } from 'src/supabase/supabase.service';
+import { IsUniqueValidator } from 'src/common/validation/validators/unique.validator';
+import { ValueExistsValidator } from 'src/common/validation/validators/value-exists.validator';
 
 /* 
 Module encapsulating logic and information regarding users. Two types

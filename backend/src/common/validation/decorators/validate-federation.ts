@@ -7,7 +7,7 @@ export function ValueExists(
     validationOptions?: ValidationOptions) {
     return function(object: Object, propertyName: string) {
         registerDecorator({
-            name: 'validateColumnType',
+            name: 'valueExists',
             target: object.constructor,
             propertyName,
             options: validationOptions,

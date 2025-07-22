@@ -161,6 +161,102 @@ describe('AthleteService', () => {
     expect(supabase.from('users').update(dto).eq).toHaveBeenCalledTimes(1);
   });
 
+  it('createProfile should throw an error when DTO contains weight class and no federation', async () => {
+
+    dto.federation = undefined;
+
+    const call = service.createProfile(dto, user)
+
+    await expect(call).rejects.toThrow(new BadRequestException(`Weight class requires a federation and gender`));
+    expect(supabase.from('users').update(dto).eq).toHaveBeenCalledTimes(0);
+  });
+
+  it('createProfile should throw an error when DTO contains weight class and no gender', async () => {
+
+    dto.gender = undefined;
+
+    const call = service.createProfile(dto, user)
+
+    await expect(call).rejects.toThrow(new BadRequestException(`Weight class requires a federation and gender`));
+  });
+
+  it('createProfile should throw an error when DTO contains division and no federation', async () => {
+
+    dto.federation = undefined;
+    dto.weight_class = undefined;
+
+    const call = service.createProfile(dto, user)
+
+    await expect(call).rejects.toThrow(new BadRequestException(`Division requires a federation`));
+  });
+
+  it('createProfile should throw an error when findFederation select returns no data', async () => {
+
+    supabase.from('federations').select('id').eq('code', dto.federation).single = jest.fn().mockResolvedValue({
+      data: null,
+      error: {
+        code: '10101',
+        message: "Fed doesn't exist"
+      }
+    })
+
+    const call = service.createProfile(dto, user)
+
+    await expect(call).rejects.toThrow(new BadRequestException(`An unexpected error occured for select:
+      10101 - Fed doesn't exist`));
+    expect(supabase.from('federations').select('id').eq('code', "IPF").single).toHaveBeenCalledTimes(1);
+  });
+
+  it('createProfile should throw an error when findDivision select returns no data', async () => {
+
+    const fedId = jest.spyOn(service as any, 'findFederation').mockResolvedValue('IPF ID');
+
+    supabase.from('divisions')
+    .select('id')
+    .eq('federation_id', fedId)
+    .eq('division_name', dto.division).single = jest.fn().mockResolvedValue({
+      data: null,
+      error: {
+        code: '10101',
+        message: "Division doesn't exist"
+      }
+    })
+
+    const call = service.createProfile(dto, user)
+
+    await expect(call).rejects.toThrow(new BadRequestException(`An unexpected error occured for select:
+      10101 - Division doesn't exist`));
+    expect(supabase.from('divisions').select('id').eq('federation_id', fedId)
+    .eq('division_name', dto.division).single).toHaveBeenCalledTimes(1);
+  });
+
+  it('createProfile should throw an error when findWeightClass select returns no data', async () => {
+
+    const fedId = jest.spyOn(service as any, 'findFederation').mockResolvedValue('IPF ID');
+
+    supabase.from('weight_classes')
+    .select('id')
+    .eq('federation_id', fedId)
+    .eq('gender', dto.gender)
+    .eq('className', dto.weight_class).single = jest.fn().mockResolvedValue({
+      data: null,
+      error: {
+        code: '10101',
+        message: "Weight class doesn't exist"
+      }
+    })
+
+    const call = service.createProfile(dto, user)
+
+    await expect(call).rejects.toThrow(new BadRequestException(`An unexpected error occured for select:
+      10101 - Weight class doesn't exist`));
+    expect(supabase.from('weight_classes')
+    .select('id')
+    .eq('federation_id', fedId)
+    .eq('gender', dto.gender)
+    .eq('className', dto.weight_class).single).toHaveBeenCalledTimes(1);
+  });
+
   it('updateProfile should successfully call update on \'users\' without throwing any errors', async () => {
 
     let dto = {

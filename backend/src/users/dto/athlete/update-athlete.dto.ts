@@ -24,8 +24,4 @@ export class UpdateAthleteDto extends PartialType(CreateAthleteDto) {
     @IsString()
     @ValueExists('divisions', 'division_name')
     division?: string;
-
-    @IsOptional()
-    @IsString()
-    team?: string;
 }

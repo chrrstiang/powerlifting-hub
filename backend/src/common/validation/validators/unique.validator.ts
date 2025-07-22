@@ -13,6 +13,11 @@ export class IsUniqueValidator implements ValidatorConstraintInterface {
 
     async validate(
         value: any, validationArguments?: ValidationArguments): Promise<boolean> {
+
+            if (!this.supabaseService) {
+                console.error('SupabaseService not injected!');
+                return false;
+            }
             
         if (!validationArguments?.constraints || validationArguments.constraints.length < 2) {
             console.error('Missing constraints for IsUniqueValidator');

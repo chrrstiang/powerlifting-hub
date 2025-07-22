@@ -13,9 +13,14 @@ export class ValueExistsValidator implements ValidatorConstraintInterface {
 
     async validate(
         value: any, validationArguments?: ValidationArguments): Promise<boolean> {
+
+            if (!this.supabaseService) {
+                console.error('SupabaseService not injected!');
+                return false;
+            }
             
         if (!validationArguments?.constraints || validationArguments.constraints.length < 2) {
-            console.error('Missing constraints for IsUniqueValidator');
+            console.error('Missing constraints for ValueExistsValidator');
             return false;
         }
         const [tableName, column] = validationArguments?.constraints;
@@ -24,15 +29,15 @@ export class ValueExistsValidator implements ValidatorConstraintInterface {
         const { data } = await (supabase as any)
         .from(tableName)
         .select('id')
-        .eq(column, value)
-        .maybeSingle() as any;
+        .eq(column, value);
 
         if (data) {
             return true;
         }
         
-        return !data;
+        return false;
     }
+
     defaultMessage?(validationArguments?: ValidationArguments): string {
         if (!validationArguments?.constraints || validationArguments.constraints.length < 2) {
             return `${validationArguments?.property} is not a valid value.`;

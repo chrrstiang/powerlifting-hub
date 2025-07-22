@@ -23,8 +23,4 @@ export class CreateAthleteDto extends CreateUserDto {
     @IsString()
     @ValueExists('divisions', 'division_name')
     division?: string;
-
-    @IsOptional()
-    @IsString()
-    team?: string;
 }

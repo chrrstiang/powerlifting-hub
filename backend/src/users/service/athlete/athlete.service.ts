@@ -48,10 +48,6 @@ export class AthleteService {
       }
     }
 
-    if (dto.team) {
-      athleteData.team = dto.team;
-    }
-
     const { name, username, gender, date_of_birth, ...athleteFields} = dto;
 
     const { error } = await this.supabase
@@ -89,10 +85,10 @@ export class AthleteService {
     if (columns && columns.length > 0) {
       // Separate fields by table
       const athleteFields = columns.filter(f => 
-        ['weight_class', 'division', 'team', 'id'].includes(f)
+        ['weight_class', 'division', 'id'].includes(f)
       );
       const userFields = columns.filter(f => 
-        ['name', 'username', 'email'].includes(f)
+        ['name', 'username', 'email', 'gender', 'date_of_birth', 'role'].includes(f)
       );
       
       // Build the select query
@@ -103,7 +99,7 @@ export class AthleteService {
       selectQuery = [athletePart, userPart].filter(Boolean).join(',');
     } else {
       // Default: select all relevant fields
-      selectQuery = 'weight_class,division,team,users(name,username,email)';
+      selectQuery = 'federation,weight_class,division,users(name,username,email,gender,date_of_birth,role)';
     }
   
     const { data, error } = await this.supabase
@@ -183,7 +179,8 @@ export class AthleteService {
     .single()
 
     if (error || !data) {
-      throw new BadRequestException(`Weight class is invalid: ${error.code} - ${error.message}`)
+      this.handleSupabaseError(error, 'select');
+      return;
     }
 
     return data.id;
@@ -194,12 +191,13 @@ export class AthleteService {
     const { data, error } = await this.supabase
     .from('divisions')
     .select('id')
-    .eq('federations', fedId)
+    .eq('federation_id', fedId)
     .eq('division_name', divisionName)
     .single()
 
     if (error || !data) {
-      throw new BadRequestException(`Federation is invalid: ${error.code} - ${error.message}`);
+      this.handleSupabaseError(error, 'select');
+      return;
     }
 
     return data.id;
@@ -214,7 +212,8 @@ export class AthleteService {
     .single()
 
     if (error || !data) {
-      throw new BadRequestException(`Federation is invalid: ${error.code} - ${error.message}`);
+      this.handleSupabaseError(error, 'select');
+      return;
     }
 
     return data.id;
@@ -224,10 +223,8 @@ export class AthleteService {
   // Ex. We can't confirm someone's weight class unless they confirm their gender and their federation,
   // so we check to make sure those fields are present.
   private validateCreateDTO(dto: CreateAthleteDto) {
-    if (dto.weight_class && !dto.federation) {
-      throw new BadRequestException(`Weight class requires a federation`);
-    } else if (dto.weight_class && !dto.gender) {
-      throw new BadRequestException(`Weight class requires a gender`);
+    if (dto.weight_class && (!dto.federation || !dto.gender)) {
+      throw new BadRequestException(`Weight class requires a federation and gender`);
     } else if (dto.division && !dto.federation) {
       throw new BadRequestException(`Division requires a federation`);
     }

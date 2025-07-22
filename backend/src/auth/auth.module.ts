@@ -11,6 +11,6 @@ Encapsulates logic regarding the authentication and authorization of users.
 @Module({
   imports: [UsersModule, SupabaseModule],
   controllers: [AuthController],
-  providers: [AuthService, IsUniqueValidator],
+  providers: [AuthService],
 })
 export class AuthModule {}

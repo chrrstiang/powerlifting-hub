@@ -1,10 +1,10 @@
-import { BadRequestException, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
-import { AuthError, PostgrestError, SupabaseClient } from '@supabase/supabase-js';
-import { MissingIdException } from 'src/common/exceptions/missing-id';
+import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { PostgrestError, SupabaseClient } from '@supabase/supabase-js';
 import { SupabaseService } from 'src/supabase/supabase.service';
 import { CreateAthleteDto } from 'src/users/dto/athlete/create-athlete.dto';
 import { UpdateAthleteDto } from 'src/users/dto/athlete/update-athlete.dto';
-;
+import { ATHLETE_RELATIONS_MAPPINGS } from 'src/common/types/athlete-relations-mappings';
+import { FIELD_ALIAS_MAPPINGS } from 'src/common/types/field-alias-mapping';
 
 /** The AthleteService class contains business logic for the API endpoints of the AthleteController.
  *  This contains operations such as inserting/updating athlete profiles to Supabase,
@@ -71,50 +71,6 @@ export class AthleteService {
 
   }
 
-  /** Queries the database for the row with the same user_id as the current authenticated
-   * user's id, fetching columns in the columns array. If undefined, then it selects all public fields.
-   * 
-   * @param columns An array containing the columns of the profile to return.
-   * @returns An object containing the values of the columns requested.
-   */
-  async retrieveProfileDetails(user: any, columns?: string[]) {
-    let selectQuery: string;
-
-    const id = user.id;
-    
-    if (columns && columns.length > 0) {
-      // Separate fields by table
-      const athleteFields = columns.filter(f => 
-        ['weight_class', 'division', 'id'].includes(f)
-      );
-      const userFields = columns.filter(f => 
-        ['name', 'username', 'email', 'gender', 'date_of_birth', 'role'].includes(f)
-      );
-      
-      // Build the select query
-      const athletePart = athleteFields.length > 0 ? athleteFields.join(',') : '';
-      const userPart = userFields.length > 0 ? `users(${userFields.join(',')})` : '';
-      
-      // Combine parts
-      selectQuery = [athletePart, userPart].filter(Boolean).join(',');
-    } else {
-      // Default: select all relevant fields
-      selectQuery = 'federation,weight_class,division,users(name,username,email,gender,date_of_birth,role)';
-    }
-  
-    const { data, error } = await this.supabase
-      .from('athletes')
-      .select(selectQuery)
-      .eq('user_id', id)
-      .single();
-  
-    if (error) {
-      this.handleSupabaseError(error, 'select');
-    };
-
-    return data;
-  }
-
   /** Updates the column of the user in the 'athletes' table with the
    * value contained in the DTO. This method assumes that only ONE column
    * was updated, therefore the DTO contains one field.
@@ -161,6 +117,125 @@ export class AthleteService {
     }
   }
 
+  /** Queries the 'athletes' table for the row with the same user_id as the current authenticated
+   * user's id, fetching information requested in the data array. If undefined, 
+   * then it selects all columns in the athletes table.
+   * 
+   * @param user The user containing the authenticated user's id.
+   * @param data An array containing the columns of the profile to return.
+   * @returns An object containing the values of the columns requested.
+   */
+  async retrieveProfileDetails(user: any, data?: string[]) {
+
+    const cleanArray = this.cleanDataArray(data)
+    const query = this.constructSelectQuery(cleanArray);
+
+    const select = await this.supabase
+    .from('athletes')
+    .select(query)
+    .eq('user_id', user.id)
+
+    if (select.error) {
+      throw new BadRequestException(`Failed to retrieve profile details:
+        ${select.error.code} - ${select.error.message}`)
+    }
+
+    return select.data;
+  }
+
+  /** This helper method ensure that duplicate queries and redundant queries for retrieveProfileDetails
+   * are removed. This includes:
+   * - same field: [federation_id, federation_id, name] -> [federation_id, name]
+   * - field from object: [federation, federation.id,] -> [federation]
+   * 
+   * @param fields The array containing the fields of the query.
+   * @returns A clean array of columns/fields to create a query with.
+   */
+  private cleanDataArray(fields?: string[]): string[] | undefined {
+    if (!fields || fields.length === 0) {
+      return undefined;
+    }
+  
+    // Basic deduplication
+    const uniqueFields = [...new Set(fields)];
+    
+    // Handle full table vs nested field conflicts
+    const fullTables = uniqueFields.filter(f => 
+      !f.includes('.') && ATHLETE_RELATIONS_MAPPINGS[f]
+    );
+    
+    // If we have full table requests, remove conflicting nested requests
+    if (fullTables.length > 0) {
+      return uniqueFields.filter(field => {
+        if (!field.includes('.')) return true;
+        
+        const [tableName] = field.split('.');
+        return !fullTables.includes(tableName);
+      });
+    }
+    
+    return uniqueFields;
+  }
+
+  /** This helper method is responsible for creating select queries for retrieveProfileDetails.
+   * Examples of...
+   * Direct queries: 'user_id', 'federation_id' (in 'athletes' table)
+   * Nested queries: 'federation.id', 'users.name', (in a relational table)
+   * Table queries: 'federation', 'division' (row of a relational table)
+   * 
+   * @param data The array containing the data to be retrieved.
+   * @returns A query ready to immediately insert into a select query.
+   */
+  private constructSelectQuery(data?: string[]) {
+    if (!data) {
+      return '*';
+    }
+
+    let directFields: string[] = [];
+    let nestedFields = {};
+
+    data.forEach(c => {
+      const actualField = FIELD_ALIAS_MAPPINGS[c] || c;
+      // if nested field (federation.name)
+      if (actualField.includes('.')) {
+        const [clientTableName, column] = actualField.split('.');
+        const actualTableName = ATHLETE_RELATIONS_MAPPINGS[clientTableName] || clientTableName;
+        
+        if (!nestedFields[clientTableName]) {
+          nestedFields[clientTableName] = {
+            actualTable: actualTableName,
+            columns: []
+          };
+        }
+        nestedFields[clientTableName].columns.push(column);
+        // if field is a full row request (federation)
+      } else if (ATHLETE_RELATIONS_MAPPINGS[actualField]) {
+        const actualTableName = ATHLETE_RELATIONS_MAPPINGS[actualField];
+        nestedFields[actualField] = {
+          actualTable: actualTableName,
+          columns: ['*']
+        };
+        // if a normal request (federation_id)
+      } else {
+        directFields.push(actualField);
+      }
+    });
+
+    // sets up query with normal fields first
+    const queryParts = [...directFields];
+
+    // construct parts of query for queries like federation.name & provides alias to match client input
+    Object.entries(nestedFields).forEach(([clientName, info]: [string, {actualTable: string, columns: string[]}]) => {
+      if (info.columns.includes('*')) {
+        queryParts.push(`${clientName}:${info.actualTable} (*)`);
+      } else {
+        queryParts.push(`${clientName}:${info.actualTable} (${info.columns.join(', ')})`);
+      }
+    });
+    
+    return queryParts.join(', ');
+  }
+
     // given an error returned by Supabase, displays an appropriate message 
   private handleSupabaseError(error: PostgrestError, operation: string) {
     throw new BadRequestException(`An unexpected error occured for ${operation}:
@@ -175,7 +250,7 @@ export class AthleteService {
     .select('id')
     .eq('federation_id', fedId)
     .eq('gender', gender)
-    .eq('class_name', className)
+    .eq('name', className)
     .single()
 
     if (error || !data) {
@@ -192,7 +267,7 @@ export class AthleteService {
     .from('divisions')
     .select('id')
     .eq('federation_id', fedId)
-    .eq('division_name', divisionName)
+    .eq('name', divisionName)
     .single()
 
     if (error || !data) {

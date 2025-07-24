@@ -4,6 +4,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { MissingIdException } from 'src/common/exceptions/missing-id';
 import { SupabaseService } from 'src/supabase/supabase.service';
 import { Gender } from 'src/users/dto/create-user.dto';
+import { PUBLIC_PROFILE_QUERY } from 'src/common/types/select.queries';
 
 /** Unit tests for Athlete Service class:
  * 
@@ -328,31 +329,63 @@ describe('AthleteService', () => {
   })
 
   it('retrieveProfileDetails should successfully passes the correct query to select for \'users\'', async () => {
-    await service.retrieveProfileDetails(user, ['name', 'username']);
+    await service.retrieveProfileDetails('anyrandomuuid', ['users.name', 'users.username']);
 
-    expect(supabase.from('athletes').select).toHaveBeenCalledWith(`users(name,username)`)
+    expect(supabase.from('athletes').select).toHaveBeenCalledWith(`users (name, username)`);
     expect(supabase.from('athletes').select).toHaveBeenCalledTimes(1);
   })
 
   it('retrieveProfileDetails should successfully passes the correct query to select for \'athletes\'', async () => {
-    await service.retrieveProfileDetails(user, ['weight_class', 'division']);
+    await service.retrieveProfileDetails('anyrandomuuid', ['weight_classes', 'divisions']);
 
-    expect(supabase.from('athletes').select).toHaveBeenCalledWith(`weight_class,division`)
+    expect(supabase.from('athletes').select).toHaveBeenCalledWith(`weight_classes (*), divisions (*)`)
     expect(supabase.from('athletes').select).toHaveBeenCalledTimes(1);
   })
 
   it('retrieveProfileDetails should successfully passes the correct query to select all (no arg)', async () => {
-    await service.retrieveProfileDetails(user, undefined);
+    await service.retrieveProfileDetails('anyrandomuuid', undefined);
 
-    expect(supabase.from('athletes').select).toHaveBeenCalledWith("federation,weight_class,division,users(name,username,email,gender,date_of_birth,role)")
+    expect(supabase.from('athletes').select).toHaveBeenCalledWith(PUBLIC_PROFILE_QUERY)
     expect(supabase.from('athletes').select).toHaveBeenCalledTimes(1);
   })
 
   it('retrieveProfileDetails should successfully passes the correct query to select all (individual)', async () => {
-    await service.retrieveProfileDetails(user, ['name', 'username', 'email', 'weight_class', 'division', 'team']);
+    await service.retrieveProfileDetails('anyrandomuuid', ['users.name', 'users.username', 'users.email', 'weight_classes', 'divisions']);
 
-    expect(supabase.from('athletes').select).toHaveBeenCalledWith('weight_class,division,users(name,username,email)')
+    expect(supabase.from('athletes').select).toHaveBeenCalledWith('users (name, username, email), weight_classes (*), divisions (*)')
     expect(supabase.from('athletes').select).toHaveBeenCalledTimes(1);
+  })
+
+  it('retrieveProfileDetails should successfully get rid of duplciate queries', async () => {
+    await service.retrieveProfileDetails('anyrandomuuid', ['users.name', 'users.name', 'users.email', 'weight_classes', 'divisions']);
+
+    expect(supabase.from('athletes').select).toHaveBeenCalledWith('users (name, email), weight_classes (*), divisions (*)')
+    expect(supabase.from('athletes').select).toHaveBeenCalledTimes(1);
+  })
+
+  it('retrieveProfileDetails should successfully get rid of nested field due to full table query', async () => {
+    await service.retrieveProfileDetails('anyrandomuuid', ['users.name', 'users.username', 'users.email', 'weight_classes', 'weight_classes.name']);
+
+    expect(supabase.from('athletes').select).toHaveBeenCalledWith('users (name, username, email), weight_classes (*)')
+    expect(supabase.from('athletes').select).toHaveBeenCalledTimes(1);
+  })
+
+  it('retrieveProfileDetails should fail due to invalid direct column (name)', async () => {
+    const call = service.retrieveProfileDetails('anyrandomuuid', ['name', 'users.username', 'users.email', 'weight_classes', 'divisions']);
+
+    await expect(call).rejects.toThrow(new BadRequestException(`Invalid query: 'name'`))
+  })
+
+  it('retrieveProfileDetails should fail due to invalid nested column (federation.horse)', async () => {
+    const call = service.retrieveProfileDetails('anyrandomuuid', ['users.name', 'users.username', 'users.email', 'federation.horse']);
+
+    await expect(call).rejects.toThrow(new BadRequestException(`Invalid query: 'federation.horse'`))
+  })
+
+  it('retrieveProfileDetails should fail due to invalid table query (users)', async () => {
+    const call = service.retrieveProfileDetails('anyrandomuuid', ['users']);
+
+    await expect(call).rejects.toThrow(new BadRequestException(`Invalid query: 'users'`))
   })
 
   // Add your specific tests here

@@ -193,7 +193,7 @@ describe('Athlete profile (POST) (e2e)', () => {
     const { data: user } = await supabase.auth.getUser(token);
     const id = user?.user?.id;
 
-    const { data, error } = await supabase
+    const { data } = await supabase
     .from('athletes')
     .select('user_id,users(name,username,gender,role,date_of_birth)')
     .eq('user_id', id)

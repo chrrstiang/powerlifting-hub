@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Body, Patch, HttpCode, Query, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, HttpCode, Query, UseGuards, Req, Param } from '@nestjs/common';
 import { UpdateUserDto } from '../../dto/update-user.dto';
 import { AthleteService } from '../../service/athlete/athlete.service';
 import { CreateAthleteDto } from '../../dto/athlete/create-athlete.dto';
 import { JwtAuthGuard } from 'src/common/validation/guards/auth-guard';
+import { AthleteExistsGuard } from 'src/common/validation/guards/athlete-exists-guard';
 
 @Controller('athlete')
 export class AthleteController {
@@ -30,13 +31,12 @@ export class AthleteController {
    * 
    * @returns An object containing the fields of the public athlete profile.
    */
-  @Get('profile')
-  @UseGuards(JwtAuthGuard)
+  @Get('profile/:id')
+  @UseGuards(JwtAuthGuard, AthleteExistsGuard)
   @HttpCode(200)
-  async retrieveProfileDetails(@Req() req, @Query('data') data?: string) {
-    const user = req.user
+  async retrieveProfileDetails(@Param('id') id: string, @Query('data') data?: string) {
     const columnsArray = data ? data.split(',') : undefined;
-    return this.athleteService.retrieveProfileDetails(user, columnsArray);
+    return this.athleteService.retrieveProfileDetails(id, columnsArray);
   }
 
   /** Updates the athlete row with the same user_id value as the current 

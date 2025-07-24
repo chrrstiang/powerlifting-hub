@@ -3,8 +3,7 @@ import { PostgrestError, SupabaseClient } from '@supabase/supabase-js';
 import { SupabaseService } from 'src/supabase/supabase.service';
 import { CreateAthleteDto } from 'src/users/dto/athlete/create-athlete.dto';
 import { UpdateAthleteDto } from 'src/users/dto/athlete/update-athlete.dto';
-import { ATHLETE_RELATIONS_MAPPINGS } from 'src/common/types/athlete-relations-mappings';
-import { FIELD_ALIAS_MAPPINGS } from 'src/common/types/field-alias-mapping';
+import { PUBLIC_PROFILE_QUERY, VALID_ATHLETES_COLUMNS_QUERIES, VALID_FULL_TABLE_QUERIES, VALID_TABLE_FIELDS } from 'src/common/types/select.queries';
 
 /** The AthleteService class contains business logic for the API endpoints of the AthleteController.
  *  This contains operations such as inserting/updating athlete profiles to Supabase,
@@ -125,7 +124,7 @@ export class AthleteService {
    * @param data An array containing the columns of the profile to return.
    * @returns An object containing the values of the columns requested.
    */
-  async retrieveProfileDetails(user: any, data?: string[]) {
+  async retrieveProfileDetails(athleteId: string, data?: string[]) {
 
     const cleanArray = this.cleanDataArray(data)
     const query = this.constructSelectQuery(cleanArray);
@@ -133,7 +132,8 @@ export class AthleteService {
     const select = await this.supabase
     .from('athletes')
     .select(query)
-    .eq('user_id', user.id)
+    .eq('id', athleteId)
+    .single()
 
     if (select.error) {
       throw new BadRequestException(`Failed to retrieve profile details:
@@ -161,7 +161,7 @@ export class AthleteService {
     
     // Handle full table vs nested field conflicts
     const fullTables = uniqueFields.filter(f => 
-      !f.includes('.') && ATHLETE_RELATIONS_MAPPINGS[f]
+      !f.includes('.') && VALID_FULL_TABLE_QUERIES[f]
     );
     
     // If we have full table requests, remove conflicting nested requests
@@ -188,36 +188,34 @@ export class AthleteService {
    */
   private constructSelectQuery(data?: string[]) {
     if (!data) {
-      return '*';
+      return PUBLIC_PROFILE_QUERY;
     }
 
     let directFields: string[] = [];
     let nestedFields = {};
 
     data.forEach(c => {
-      const actualField = FIELD_ALIAS_MAPPINGS[c] || c;
       // if nested field (federation.name)
-      if (actualField.includes('.')) {
-        const [clientTableName, column] = actualField.split('.');
-        const actualTableName = ATHLETE_RELATIONS_MAPPINGS[clientTableName] || clientTableName;
-        
-        if (!nestedFields[clientTableName]) {
-          nestedFields[clientTableName] = {
-            actualTable: actualTableName,
-            columns: []
-          };
+      if (c.includes('.')) {
+        const [tableName, column] = c.split('.');
+
+        if (!VALID_TABLE_FIELDS[tableName]?.includes(column)) {
+          throw new BadRequestException(`Invalid query: '${tableName}.${column}'`)
         }
-        nestedFields[clientTableName].columns.push(column);
+        
+        if (!nestedFields[tableName]) {
+          nestedFields[tableName] = [];
+        }
+        nestedFields[tableName].push(column);
         // if field is a full row request (federation)
-      } else if (ATHLETE_RELATIONS_MAPPINGS[actualField]) {
-        const actualTableName = ATHLETE_RELATIONS_MAPPINGS[actualField];
-        nestedFields[actualField] = {
-          actualTable: actualTableName,
-          columns: ['*']
-        };
+      } else if (VALID_FULL_TABLE_QUERIES.has(c)) {
+        nestedFields[c] = ['*'];
         // if a normal request (federation_id)
       } else {
-        directFields.push(actualField);
+        if (!VALID_ATHLETES_COLUMNS_QUERIES.has(c)) {
+          throw new BadRequestException(`Invalid query: '${c}'`);
+        }
+        directFields.push(c);
       }
     });
 
@@ -225,11 +223,11 @@ export class AthleteService {
     const queryParts = [...directFields];
 
     // construct parts of query for queries like federation.name & provides alias to match client input
-    Object.entries(nestedFields).forEach(([clientName, info]: [string, {actualTable: string, columns: string[]}]) => {
-      if (info.columns.includes('*')) {
-        queryParts.push(`${clientName}:${info.actualTable} (*)`);
+    Object.entries(nestedFields).forEach(([tableName, columns]: [table: string, columns: string[]]) => {
+      if (columns.includes('*')) {
+        queryParts.push(`${tableName} (*)`);
       } else {
-        queryParts.push(`${clientName}:${info.actualTable} (${info.columns.join(', ')})`);
+        queryParts.push(`${tableName} (${columns.join(', ')})`);
       }
     });
     

@@ -45,19 +45,19 @@ describe('AthleteController', () => {
     expect(athleteService.createProfile).toHaveBeenCalledWith(dto, request.user)
   });
 
-  it('should return profile data from service', async () => {
-    const result = controller.retrieveProfileDetails(request, 'name,username,weight_class');
+  it('retrieveProfileDetails should return profile data from service', async () => {
+    const result = controller.retrieveProfileDetails('some-uuid', 'name,username,weight_class');
     
-    expect(athleteService.retrieveProfileDetails).toHaveBeenCalledWith(request.user, ['name', 'username', 'weight_class']);
+    expect(athleteService.retrieveProfileDetails).toHaveBeenCalledWith('some-uuid', ['name', 'username', 'weight_class']);
     expect(result).resolves.toEqual({
       name: 'christian', username: 'chrrstian', weight_class: '67.5kg'
     });
   });
 
   it('should return profile data from service', async () => {
-    const result = controller.retrieveProfileDetails(request, undefined);
+    controller.retrieveProfileDetails('some-uuid', undefined);
     
-    expect(athleteService.retrieveProfileDetails).toHaveBeenCalledWith(request.user, undefined);
+    expect(athleteService.retrieveProfileDetails).toHaveBeenCalledWith('some-uuid', undefined);
   });
 
   it('controller.updateProfile makes correct calls and returns', async () => {

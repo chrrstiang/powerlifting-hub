@@ -258,58 +258,26 @@ describe('AthleteService', () => {
     .eq('className', dto.weight_class).single).toHaveBeenCalledTimes(1);
   });
 
-  it('updateProfile should successfully call update on \'users\' without throwing any errors', async () => {
-
-    let dto = {
-      username: 'new unique username'
-    }
-
-    supabase.from = jest.fn().mockImplementation((table: string) => {
-      if (table === 'users') return mockUsersChain;
-      if (table === 'athletes') return mockAthletesChain;
-      throw new Error(`Unexpected table: ${table}`);
-    });
-
-    const updateCall = service.updateProfile(dto, user)
-
-    await expect(updateCall).resolves.not.toThrow();
-    expect(supabase.from).toHaveBeenCalledWith('users');
-    expect(mockUsersChain.update).toHaveBeenCalledWith(dto);
-    expect(mockUsersChain.update).toHaveBeenCalledTimes(1);
-  })
-
   it('updateProfile should successfully call update on \'athletes\' without throwing any errors', async () => {
 
     let dto = {
-      weight_class: '140kg+'
+      federation: 'IPF',
+      division: 'Junior',
+      weight_class: '59kg'
     }
 
-    supabase.from = jest.fn().mockImplementation((table: string) => {
-      if (table === 'users') return mockUsersChain;
-      if (table === 'athletes') return mockAthletesChain;
-      throw new Error(`Unexpected table: ${table}`);
-    });
-
-    const updateCall = service.updateProfile(dto, user)
+    const updateCall = service.updateAthleteProfile(user, dto)
 
     await expect(updateCall).resolves.not.toThrow();
     expect(supabase.from).toHaveBeenCalledWith('athletes');
-    expect(mockAthletesChain.update).toHaveBeenCalledWith(dto);
-    expect(mockAthletesChain.update).toHaveBeenCalledTimes(1);
-  })
-
-  it('updateProfile should throw an exception due to more than one DTO field.', async () => {
-
-    const updateCall = service.updateProfile(dto, user);
-
-    await expect(updateCall).rejects.toThrow(new BadRequestException(
-      'Exactly one field must be provided for update.'))
-    expect(supabase.from).not.toHaveBeenCalled();
+    expect(supabase.from('athletes').update).toHaveBeenCalledTimes(1);
   })
 
   it('updateProfile should throw an exception when update returns an error', async () => {
     let dto = {
-      name: 'christian'
+      federation: 'IPF',
+      division: 'Junior',
+      weight_class: '59kg'
     }
 
     supabase.from('users').update(dto).eq = jest.fn().mockResolvedValue({
@@ -320,7 +288,7 @@ describe('AthleteService', () => {
       }
     })
 
-    const updateCall = service.updateProfile(dto, user);
+    const updateCall = service.updateAthleteProfile(user, dto);
 
     await expect(updateCall).rejects.toThrow(new BadRequestException(
       `An unexpected error occured for update:

@@ -20,14 +20,6 @@ import { PUBLIC_PROFILE_QUERY } from 'src/common/types/select.queries';
  * - Successful with table, nested, and direct query
  * - Fail due to non-accessible direct field (user_id)
  * - Fail due to user not being found
- * --- Update Profile ---
- * - Successful update of 'users' table column
- * - Successul update of 'athletes' table column
- * - Fail due to username already being taken
- * - Fail due to invalid weight class
- * - Fail due to invalid division
- * - Fail due to invalid federation
- * 
  */
 describe('Athlete profile (GET) (e2e)', () => {
   let app: INestApplication<App>;

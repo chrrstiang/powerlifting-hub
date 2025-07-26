@@ -4,6 +4,7 @@ import { SupabaseService } from 'src/supabase/supabase.service';
 import { CreateAthleteDto } from 'src/users/dto/athlete/create-athlete.dto';
 import { UpdateAthleteDto } from 'src/users/dto/athlete/update-athlete.dto';
 import { PUBLIC_PROFILE_QUERY, VALID_ATHLETES_COLUMNS_QUERIES, VALID_FULL_TABLE_QUERIES, VALID_TABLE_FIELDS } from 'src/common/types/select.queries';
+import { UsersService } from '../users.service';
 
 /** The AthleteService class contains business logic for the API endpoints of the AthleteController.
  *  This contains operations such as inserting/updating athlete profiles to Supabase,
@@ -21,7 +22,6 @@ export class AthleteService {
     }
     this.supabase = this.supabaseService.getClient()
   }
-
   
   /** Inserts a row into the 'athletes' table with the data contained in the
    * DTO. Additionally, the name and username of the DTO are stored in the 'users' table.
@@ -33,7 +33,7 @@ export class AthleteService {
 
     this.validateCreateDTO(dto);
 
-    let athleteData: AthleteData = {user_id};
+    let athleteData: CreateAthleteData = {user_id};
 
     if (dto.federation) {
       athleteData.federation_id = await this.findFederation(dto.federation);
@@ -70,40 +70,34 @@ export class AthleteService {
 
   }
 
-  /** Updates the column of the user in the 'athletes' table with the
-   * value contained in the DTO. This method assumes that only ONE column
-   * was updated, therefore the DTO contains one field.
+  /** Updates the data of the user'a athlete profile, including their federation, division,
+   * and weight class. The DTO contains all three fields, and validates them through the helper methods.
    * 
-   * @param updateUserDto The DTO containing the updated column value.
+   * @param user The user object containg the user id
+   * @param dto The DTO containing the federation, division, and weight class
+   * that the athlete profile will contain.
    */
-  async updateProfile(dto: UpdateAthleteDto, user: any) {
-    // ensure only one new value is in DTO.
-    const fieldCount = Object.values(dto).filter(value => value !== undefined).length;
-  
-    if (fieldCount !== 1) {
-    throw new BadRequestException('Exactly one field must be provided for update.');
-    }
+  async updateAthleteProfile(user: any, dto: UpdateAthleteDto) {
 
-    const id = user.id
+    const { data: gender } = await this.supabase
+    .from('users')
+    .select('gender')
+    .eq('id', user.id)
+    .single();
 
-    let table: string;
-    let cond: string;
-
-    if (dto.name || dto.username) {
-      table = 'users';
-      cond = 'id';
-    } else {
-      table = 'athletes';
-      cond = 'user_id';
-    }
+    let updatedData: UpdateAthleteData = {};
+    updatedData.federation_id = await this.findFederation(dto.federation);
+    updatedData.division_id = await this.findDivision(updatedData.federation_id!, dto.division)
+    updatedData.weight_class_id = await this.findWeightClass(
+      updatedData.federation_id!, gender! as unknown as string, dto.weight_class)
 
     const { error } = await this.supabase
-    .from(table)
-    .update(dto)
-    .eq(cond, id);
+    .from('athletes')
+    .update(updatedData)
+    .eq('user_id', user.id)
 
     if (error) {
-      this.handleSupabaseError(error, 'update');
+      UsersService.handleSupabaseError(error, 'update')
     }
   }
 
@@ -112,7 +106,7 @@ export class AthleteService {
     const { error } = await this.supabase.from(table).insert(data);
 
     if (error) {
-     this.handleSupabaseError(error, 'insert')
+     UsersService.handleSupabaseError(error, 'insert')
     }
   }
 
@@ -234,12 +228,6 @@ export class AthleteService {
     return queryParts.join(', ');
   }
 
-    // given an error returned by Supabase, displays an appropriate message 
-  private handleSupabaseError(error: PostgrestError, operation: string) {
-    throw new BadRequestException(`An unexpected error occured for ${operation}:
-      ${error.code} - ${error.message}`);
-  }
-
   // searches for the weight class with the given federation id, gender, and weight class name.
   // if found, returns id. if not, throws exception.
   private async findWeightClass(fedId: string, gender: string, className: string) {
@@ -252,7 +240,7 @@ export class AthleteService {
     .single()
 
     if (error || !data) {
-      this.handleSupabaseError(error, 'select');
+      UsersService.handleSupabaseError(error, 'select');
       return;
     }
 
@@ -269,7 +257,7 @@ export class AthleteService {
     .single()
 
     if (error || !data) {
-      this.handleSupabaseError(error, 'select');
+      UsersService.handleSupabaseError(error, 'select');
       return;
     }
 
@@ -285,7 +273,7 @@ export class AthleteService {
     .single()
 
     if (error || !data) {
-      this.handleSupabaseError(error, 'select');
+      UsersService.handleSupabaseError(error, 'select');
       return;
     }
 

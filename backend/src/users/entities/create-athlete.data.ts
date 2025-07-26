@@ -1,4 +1,4 @@
-interface AthleteData {
+interface CreateAthleteData {
     user_id: number;
     federation_id?: string;
     division_id?: string;

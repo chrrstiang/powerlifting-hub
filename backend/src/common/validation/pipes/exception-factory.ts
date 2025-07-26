@@ -3,6 +3,13 @@ import { ValidationError } from 'class-validator';
 import { BadRequestException } from '@nestjs/common';
 import { VALIDATION_EXCEPTION_MAPPINGS } from './exception-mappings';
 
+/** This exception factory acts as a validation pipe for DTO validation errors.
+ * Validation errors are passed to the exception factory, and the factory returns an
+ * appropriate exception depending on the validation constraint.
+ * 
+ * @param errors An array containing all errors that occured during validation.
+ * @returns An exception that is appropriate for the first validation error.
+ */
 export const validationExceptionFactory = (errors: ValidationError[]) => {
   const firstError = errors[0];
   const property = firstError.property;

@@ -1,9 +1,9 @@
 import { Controller, Get, Post, Body, Patch, HttpCode, Query, UseGuards, Req, Param } from '@nestjs/common';
-import { UpdateUserDto } from '../../dto/update-user.dto';
 import { AthleteService } from '../../service/athlete/athlete.service';
 import { CreateAthleteDto } from '../../dto/athlete/create-athlete.dto';
 import { JwtAuthGuard } from 'src/common/validation/guards/auth-guard';
 import { AthleteExistsGuard } from 'src/common/validation/guards/athlete-exists-guard';
+import { UpdateAthleteDto } from 'src/users/dto/athlete/update-athlete.dto';
 
 @Controller('athlete')
 export class AthleteController {
@@ -39,19 +39,12 @@ export class AthleteController {
     return this.athleteService.retrieveProfileDetails(id, columnsArray);
   }
 
-  /** Updates the athlete row with the same user_id value as the current 
-   * authenticated user. Updated fields are given to the DTO and updated accordingly in the
-   * athlete row.
-   * 
-   * @param updateUserDto The DTO containing the new values for the updated fields.
-   * @returns An object containing a success message.
-   */
-  @Patch('profile')
+  @Patch('/profile')
   @UseGuards(JwtAuthGuard)
   @HttpCode(200)
-  async updateProfile(@Body() updateUserDto: UpdateUserDto, @Req() req) {
+  async updateAthleteProfile(@Body() dto: UpdateAthleteDto, @Req() req) {
     const user = req.user;
-    this.athleteService.updateProfile(updateUserDto, user);
-    return { message: 'Profile updated successfully' }
+    await this.athleteService.updateAthleteProfile(user, dto)
+    return { message: 'Athlete profile updated successfully' };
   }
 }

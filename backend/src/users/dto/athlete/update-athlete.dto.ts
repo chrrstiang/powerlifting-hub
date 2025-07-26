@@ -8,20 +8,20 @@ import { ValueExists } from 'src/common/validation/decorators/validate-federatio
  * appropriate validation decorators. 
  * 
  */
-export class UpdateAthleteDto extends PartialType(CreateAthleteDto) {
+export class UpdateAthleteDto {
 
     @IsOptional()
     @IsString()
     @ValueExists('federations', 'code')
-    federation?: string;
+    federation: string;
 
     @IsOptional()
     @IsString()
-    @ValueExists('weight_classes', 'class_name')
-    weight_class?: string;
+    @ValueExists('weight_classes', 'name')
+    weight_class: string;
 
     @IsOptional()
     @IsString()
-    @ValueExists('divisions', 'division_name')
-    division?: string;
+    @ValueExists('divisions', 'name')
+    division: string;
 }

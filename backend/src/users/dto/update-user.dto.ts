@@ -7,7 +7,7 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
 
     @IsNotEmpty()
     @IsString()
-    name: string;
+    name?: string;
 
     @IsNotEmpty()
     @IsString()
@@ -15,5 +15,5 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
     @Matches(/^[a-z0-9._]+$/)
     @Length(3, 30)
     @IsUnique('users', 'username')
-    username: string;
+    username?: string;
 }

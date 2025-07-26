@@ -16,7 +16,7 @@ describe('AthleteController', () => {
         username: 'chrrstian',
         weight_class: '67.5kg'
       }),
-      updateProfile: jest.fn()
+      updateAthleteProfile: jest.fn()
     } as unknown as jest.Mocked<AthleteService>;
 
     controller = new AthleteController(athleteService)
@@ -60,15 +60,15 @@ describe('AthleteController', () => {
     expect(athleteService.retrieveProfileDetails).toHaveBeenCalledWith('some-uuid', undefined);
   });
 
-  it('controller.updateProfile makes correct calls and returns', async () => {
+  it('controller.updateAthleteProfile makes correct calls and returns', async () => {
     const dto = {
-      name: 'Christian',
-      username: 'chrrstian_',
-      weight_class: '67.5kg',
+      federation: 'IPF',
+      division: 'Junior',
+      weight_class: '59kg'
     }
 
-    const call = await controller.updateProfile(dto, request);
-    expect(call).toEqual({ message: "Profile updated successfully"})
-    expect(athleteService.updateProfile).toHaveBeenCalledWith(dto, request.user)
+    const call = await controller.updateAthleteProfile(dto, request);
+    expect(call).toEqual({ message: "Athlete profile updated successfully"})
+    expect(athleteService.updateAthleteProfile).toHaveBeenCalledWith(request.user, dto)
   });
 });

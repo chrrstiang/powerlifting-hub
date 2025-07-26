@@ -5,6 +5,7 @@ import { CreateAthleteDto } from 'src/users/dto/athlete/create-athlete.dto';
 import { UpdateAthleteDto } from 'src/users/dto/athlete/update-athlete.dto';
 import { PUBLIC_PROFILE_QUERY, VALID_ATHLETES_COLUMNS_QUERIES, VALID_FULL_TABLE_QUERIES, VALID_TABLE_FIELDS } from 'src/common/types/select.queries';
 import { UsersService } from '../users.service';
+import { Gender } from 'src/users/dto/create-user.dto';
 
 /** The AthleteService class contains business logic for the API endpoints of the AthleteController.
  *  This contains operations such as inserting/updating athlete profiles to Supabase,
@@ -89,7 +90,7 @@ export class AthleteService {
     updatedData.federation_id = await this.findFederation(dto.federation);
     updatedData.division_id = await this.findDivision(updatedData.federation_id!, dto.division)
     updatedData.weight_class_id = await this.findWeightClass(
-      updatedData.federation_id!, gender! as unknown as string, dto.weight_class)
+      updatedData.federation_id!, gender?.gender! as unknown as string, dto.weight_class)
 
     const { error } = await this.supabase
     .from('athletes')
@@ -97,7 +98,7 @@ export class AthleteService {
     .eq('user_id', user.id)
 
     if (error) {
-      UsersService.handleSupabaseError(error, 'update')
+      UsersService.handleSupabaseError(error, 'Failed to update athlete information')
     }
   }
 
@@ -106,7 +107,7 @@ export class AthleteService {
     const { error } = await this.supabase.from(table).insert(data);
 
     if (error) {
-     UsersService.handleSupabaseError(error, 'insert')
+     UsersService.handleSupabaseError(error, `Failed to insert data into ${table}`)
     }
   }
 
@@ -130,8 +131,7 @@ export class AthleteService {
     .single()
 
     if (select.error) {
-      throw new BadRequestException(`Failed to retrieve profile details:
-        ${select.error.code} - ${select.error.message}`)
+      UsersService.handleSupabaseError(select.error, 'Failed to retrieve profile details')
     }
 
     return select.data;
@@ -240,11 +240,11 @@ export class AthleteService {
     .single()
 
     if (error || !data) {
-      UsersService.handleSupabaseError(error, 'select');
-      return;
+      UsersService.handleSupabaseError(
+        error, `Failed to locate weight class '${className}' with '${gender}' gender and given federation id`);
     }
 
-    return data.id;
+    return data?.id;
   }
 
   // searches for federation using the federation code given, returns id if found.
@@ -257,11 +257,11 @@ export class AthleteService {
     .single()
 
     if (error || !data) {
-      UsersService.handleSupabaseError(error, 'select');
-      return;
+      UsersService.handleSupabaseError(
+        error, `Failed to locate division '${divisionName}' with the given federation id`);
     }
 
-    return data.id;
+    return data?.id;
   }
 
   // searches for federation using the federation code given, returns id if found.
@@ -273,11 +273,11 @@ export class AthleteService {
     .single()
 
     if (error || !data) {
-      UsersService.handleSupabaseError(error, 'select');
-      return;
+      UsersService.handleSupabaseError(
+        error, `Failed to federation with code '${federationCode}'`);
     }
 
-    return data.id;
+    return data?.id;
   }
 
   // ensures that necessary fields are present in order to insert given fields with confidence.

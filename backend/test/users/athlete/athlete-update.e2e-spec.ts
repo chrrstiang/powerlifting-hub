@@ -24,14 +24,33 @@ import { UpdateAthleteDto } from 'src/users/dto/athlete/update-athlete.dto';
  * - Fail due to division not matching federation
  * - Fail due to invalid federation
  */
-describe('Athlete profile (POST) (e2e)', () => {
+describe('Athlete profile (PATCH) (e2e)', () => {
   let app: INestApplication<App>;
   let supabaseService: SupabaseService;
   let supabase: SupabaseClient;
-  let dto;
   let profileLogin;
   let token;
-  let successTests: Array<[string, UpdateAthleteDto, any]> = []
+  let successCases: Array<[string, UpdateAthleteDto]> = [
+    ['Successful update of federation/weight_class', {federation: 'IPF', division: 'Junior', weight_class: '66kg'}],
+    ['Successful update of division', {federation: 'USAPL', division: 'Teen 3', weight_class: '67.5kg'}],
+    ['Successful update of weight_class', {federation: 'USAPL', division: 'Junior', weight_class: '75kg'}],
+    ['Successful update of division/weight_class', {federation: 'USAPL', division: 'Open', weight_class: '82.5kg'}],
+    ['Successful update of all athlete fields at once', {federation: 'IPF', division: 'Sub-Junior', weight_class: '83kg'}]
+  ]
+  let failureCases: Array<[string, UpdateAthleteDto, string]> = [
+    ['Fail due to weight class not matching gender', {federation: 'IPF', division: 'Junior', weight_class: '63kg'},
+         `Failed to locate weight class '63kg' with 'Male' gender and given federation id`],
+    ['Fail due to weight class not matching federation:', {federation: 'IPF', division: 'Junior', weight_class: '67.5kg'},
+        `Failed to locate weight class '67.5kg' with 'Male' gender and given federation id`],
+    ['Fail due to division not matching federation', {federation: 'USAPL', division: 'Sub-Junior', weight_class: '67.5kg'},
+        `Failed to locate division 'Sub-Junior' with the given federation id`],
+    ['Fail due to nonexistent federation', {federation: 'Im fake', division: 'Sub-Junior', weight_class: '67.5kg'},
+        `federation does not exist`],
+    ['Fail due to nonexistent division', {federation: 'IPF', division: 'Im fake', weight_class: '67.5kg'},
+        `division does not exist`],
+    ['Fail due to nonexistent weight class', {federation: 'IPF', division: 'Im fake', weight_class: 'Im fake'},
+        `weight_class does not exist`]
+  ]
   let updateId = '05b2dd02-b33f-4f06-94a3-fb7ca8380852';
 
   beforeEach(async () => {
@@ -101,61 +120,21 @@ describe('Athlete profile (POST) (e2e)', () => {
   })
 
   afterAll(async () => {
-    await app.close(); // Move this here
+    await app.close();
 })
 
-  test(`Successful update of 'users' column`, async () => {
-    dto = {name: 'Daniel'}
+  test.each(successCases)(`%s`, async (testName: string, dto: UpdateAthleteDto) => {
     const res = await request(app.getHttpServer())
     .patch('/athlete/profile')
     .set(`Authorization`, `Bearer ${token}`)
     .send(dto)
 
     expect(res.status).toBe(200)
-    expect(res.body.message).toBe('Profile updated successfully')
-
-    const { data: newFed } = await supabase
-  .from('federations')
-  .select('*')
-  .eq('id', '2339e288-bd79-4d91-b357-e5f5969a5223')
-  .single()
-
-    console.log('New federation exists?', newFed);
-
-    const fed = await supabase
-  .from('athletes')
-  .select('federation_id')
-  .eq('user_id', updateId)
-  .single()
-
-    console.log('Current federation_id in athletes table:', fed.data?.federation_id);
+    expect(res.body.message).toBe('Athlete profile updated successfully')
 
     const { data } = await supabase
     .from('athletes')
-    .select('users (name)')
-    .eq('user_id', updateId)
-    .single()
-
-    const users = data?.users as unknown as { 
-        name: string; 
-        username: string };
-
-    expect(users.name).toBe(dto.name);
-  })
-
-  test(`Successful update of federation column`, async () => {
-    dto = {federation: 'IPF'}
-    const res = await request(app.getHttpServer())
-    .patch('/athlete/profile')
-    .set(`Authorization`, `Bearer ${token}`)
-    .send(dto)
-
-    expect(res.status).toBe(200)
-    expect(res.body.message).toBe('Profile updated successfully')
-
-    const { data } = await supabase
-    .from('athletes')
-    .select('federations (*)')
+    .select('federations (code), divisions (name), weight_classes (name)')
     .eq('user_id', updateId)
     .single()
 
@@ -163,6 +142,26 @@ describe('Athlete profile (POST) (e2e)', () => {
         code: string
     }
 
-    expect(federations.code).toBe(dto.federation);
+    const divisions = data?.divisions as unknown as {
+        name: string
+    }
+
+    const weight_classes = data?.weight_classes as unknown as {
+        name: string
+    }
+
+    expect(federations.code).toEqual(dto.federation)
+    expect(divisions.name).toEqual(dto.division)
+    expect(weight_classes.name).toEqual(dto.weight_class)
+  })
+
+  test.each(failureCases)(`%s`, async (testName: string, dto: UpdateAthleteDto, errorMessage: string) => {
+    const res = await request(app.getHttpServer())
+    .patch('/athlete/profile')
+    .set(`Authorization`, `Bearer ${token}`)
+    .send(dto)
+
+    expect(res.status).toBe(400)
+    expect(res.body.message).toContain(errorMessage)
   })
 });

@@ -1,8 +1,9 @@
-import { BadRequestException, InternalServerErrorException } from "@nestjs/common";
+import { BadRequestException, Injectable, InternalServerErrorException } from "@nestjs/common";
 import { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 import { SupabaseService } from "src/supabase/supabase.service";
 import { UpdateUserDto } from "../dto/update-user.dto";
 
+@Injectable()
 export class UsersService {
     supabase: SupabaseClient;
 
@@ -21,19 +22,18 @@ export class UsersService {
    */
   async updateProfile(dto: UpdateUserDto, user: any) {
 
-    const { data, error } = await this.supabase
+    const { error } = await this.supabase
     .from('users')
     .update(dto)
     .eq('id', user.id)
 
     if (error) {
-      UsersService.handleSupabaseError(error, 'update');
+      UsersService.handleSupabaseError(error, 'Failed to update user profile');
     }
   }
 
   // given an error returned by Supabase, displays an appropriate message 
-  static handleSupabaseError(error: PostgrestError, operation: string) {
-    throw new BadRequestException(`An unexpected error occured for ${operation}:
-      ${error.code} - ${error.message}`);
+  static handleSupabaseError(error: PostgrestError, message: string) {
+    throw new BadRequestException(`${message}: ${error.code} - ${error.message}`);
   }
 }

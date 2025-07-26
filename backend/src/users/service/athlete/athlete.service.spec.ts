@@ -1,7 +1,6 @@
-import { BadRequestException, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common';
 import { AthleteService } from './athlete.service';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { MissingIdException } from 'src/common/exceptions/missing-id';
 import { SupabaseService } from 'src/supabase/supabase.service';
 import { Gender } from 'src/users/dto/create-user.dto';
 import { PUBLIC_PROFILE_QUERY } from 'src/common/types/select.queries';
@@ -21,7 +20,6 @@ describe('AthleteService', () => {
   let user;
   let addToTable;
   let mockUsersChain;
-  let mockAthletesChain;
   let mockEq; 
 
   beforeEach(async () => {
@@ -87,10 +85,6 @@ describe('AthleteService', () => {
     addToTable = jest.spyOn(service as any, 'addToTable');
 
     mockUsersChain = {
-      update: jest.fn().mockReturnValue({ eq: mockEq })
-    };
-    
-    mockAthletesChain = {
       update: jest.fn().mockReturnValue({ eq: mockEq })
     };
 

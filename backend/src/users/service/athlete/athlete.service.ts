@@ -1,15 +1,14 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
-import { PostgrestError, SupabaseClient } from '@supabase/supabase-js';
+import { SupabaseClient } from '@supabase/supabase-js';
 import { SupabaseService } from 'src/supabase/supabase.service';
 import { CreateAthleteDto } from 'src/users/dto/athlete/create-athlete.dto';
 import { UpdateAthleteDto } from 'src/users/dto/athlete/update-athlete.dto';
 import { PUBLIC_PROFILE_QUERY, VALID_ATHLETES_COLUMNS_QUERIES, VALID_FULL_TABLE_QUERIES, VALID_TABLE_FIELDS } from 'src/common/types/select.queries';
 import { UsersService } from '../users.service';
-import { Gender } from 'src/users/dto/create-user.dto';
 
 /** The AthleteService class contains business logic for the API endpoints of the AthleteController.
- *  This contains operations such as inserting/updating athlete profiles to Supabase,
- * retrieveing profile details of an Athlete, and...
+ *  This contains operations such as inserting/updating athlete profiles to Supabase and
+ * retrieveing profile details of an Athlete.
  * 
  */
 @Injectable()
@@ -24,10 +23,10 @@ export class AthleteService {
     this.supabase = this.supabaseService.getClient()
   }
   
-  /** Inserts a row into the 'athletes' table with the data contained in the
-   * DTO. Additionally, the name and username of the DTO are stored in the 'users' table.
+  /** Handles the insertion of the new data from the Athlete profile completion
+   * form. Adds data to its corresponding table.
    * 
-   * @param dto The DTO containing the athlete profile data.
+   * @param dto The DTO containing the user/athlete data.
    */
   async createProfile(dto: CreateAthleteDto, user: any) {
     const user_id = user.id;
@@ -280,9 +279,10 @@ export class AthleteService {
     return data?.id;
   }
 
-  // ensures that necessary fields are present in order to insert given fields with confidence.
-  // Ex. We can't confirm someone's weight class unless they confirm their gender and their federation,
-  // so we check to make sure those fields are present.
+  /* ensures that necessary fields are present in order to insert given fields with confidence.
+  Ex. We can't confirm someone's weight class unless they confirm their gender and their federation,
+  so we check to make sure those fields are present.
+  */
   private validateCreateDTO(dto: CreateAthleteDto) {
     if (dto.weight_class && (!dto.federation || !dto.gender)) {
       throw new BadRequestException(`Weight class requires a federation and gender`);

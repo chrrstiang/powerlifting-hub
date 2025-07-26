@@ -39,7 +39,7 @@ export class AthleteController {
     return this.athleteService.retrieveProfileDetails(id, columnsArray);
   }
 
-  @Patch('/profile')
+  @Patch('profile')
   @UseGuards(JwtAuthGuard)
   @HttpCode(200)
   async updateAthleteProfile(@Body() dto: UpdateAthleteDto, @Req() req) {

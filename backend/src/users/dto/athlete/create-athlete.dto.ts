@@ -16,11 +16,11 @@ export class CreateAthleteDto extends CreateUserDto {
 
     @IsOptional()
     @IsString()
-    @ValueExists('weight_classes', 'class_name')
+    @ValueExists('weight_classes', 'name')
     weight_class?: string;
 
     @IsOptional()
     @IsString()
-    @ValueExists('divisions', 'division_name')
+    @ValueExists('divisions', 'name')
     division?: string;
 }

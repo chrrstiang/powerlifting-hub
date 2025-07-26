@@ -48,7 +48,7 @@ describe('Athlete profile (PATCH) (e2e)', () => {
         `federation does not exist`],
     ['Fail due to nonexistent division', {federation: 'IPF', division: 'Im fake', weight_class: '67.5kg'},
         `division does not exist`],
-    ['Fail due to nonexistent weight class', {federation: 'IPF', division: 'Im fake', weight_class: 'Im fake'},
+    ['Fail due to nonexistent weight class', {federation: 'IPF', division: 'Junior', weight_class: 'Im fake'},
         `weight_class does not exist`]
   ]
   let updateId = '05b2dd02-b33f-4f06-94a3-fb7ca8380852';
@@ -99,17 +99,9 @@ describe('Athlete profile (PATCH) (e2e)', () => {
   afterEach(async () => {
 
     // delete record of updateProfile tests' row 
-    const originalName = 'Christian';
-    const originalUsername = 'cg_update_test_acc';
     const originalFedId = '6dd4a324-f5f0-4d62-a3e8-52aae276ea50';
     const originalDivId = 'a8da983e-3f7c-4070-affe-578b8f4db5fe';
     const originalWcId = 'e131fef7-3575-418e-bf64-eb48832d4c77';
-
-    // reset user columns
-    await supabase.from('users').update({
-        name: originalName, 
-        username: originalUsername
-    }).eq('id', updateId);
 
     // reset athletes columns
     await supabase.from('athletes').update({

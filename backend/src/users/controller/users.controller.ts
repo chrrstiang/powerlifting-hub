@@ -3,8 +3,8 @@ import { JwtAuthGuard } from 'src/common/validation/guards/auth-guard';
 import { UsersService } from '../service/users.service';
 import { UpdateUserDto } from '../dto/update-user.dto';
 
-@Controller('athlete')
-export class AthleteController {
+@Controller('user')
+export class UserController {
   constructor(
     private readonly usersService: UsersService) {}
 
@@ -15,7 +15,7 @@ export class AthleteController {
    * @param updateUserDto The DTO containing the new values for the updated fields.
    * @returns An object containing a success message.
    */
-  @Patch('profile/user')
+  @Patch('profile')
   @UseGuards(JwtAuthGuard)
   @HttpCode(200)
   async updateProfile(@Body() dto: UpdateUserDto, @Req() req) {

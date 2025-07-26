@@ -14,9 +14,8 @@ export class UsersService {
     this.supabase = this.supabaseService.getClient()
   }
 
-  /** Updates the column of the user in the 'athletes' table with the
-   * value contained in the DTO. This method assumes that only ONE column
-   * was updated, therefore the DTO contains one field.
+  /** Given a DTO containing a name and/or username, the users row with the
+   * same id as the current user is updated.
    * 
    * @param updateUserDto The DTO containing the updated column value.
    */

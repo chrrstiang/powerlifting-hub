@@ -136,7 +136,7 @@ describe('Athlete profile (POST) (e2e)', () => {
     .from('divisions')
     .select('id')
     .eq('federation_id', federation.data?.id)
-    .eq('division_name', dto.division)
+    .eq('name', dto.division)
     .single()
 
     const weight_class = await supabase
@@ -144,7 +144,7 @@ describe('Athlete profile (POST) (e2e)', () => {
     .select('id')
     .eq('federation_id', federation.data?.id)
     .eq('gender', dto.gender)
-    .eq('class_name', dto.weight_class)
+    .eq('name', dto.weight_class)
     .single()
 
     const expectedFed = federation.data?.id
@@ -254,7 +254,7 @@ describe('Athlete profile (POST) (e2e)', () => {
     .from('divisions')
     .select('id')
     .eq('federation_id', federation.data?.id)
-    .eq('division_name', dto.division)
+    .eq('name', dto.division)
     .single()
 
     const expectedFed = federation.data?.id

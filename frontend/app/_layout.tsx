@@ -6,7 +6,7 @@ import { StatusBar } from 'expo-status-bar'
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native'
 import { useFonts } from 'expo-font'
 import { SplashScreen, Stack } from 'expo-router'
-import { Provider } from './Provider'
+import { Provider } from 'components/Provider'
 import { useTheme } from 'tamagui'
 
 export {
@@ -21,6 +21,10 @@ export const unstable_settings = {
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync()
+
+const Providers = ({ children }: { children: React.ReactNode }) => {
+  return <Provider>{children}</Provider>
+}
 
 export default function RootLayout() {
   const [interLoaded, interError] = useFonts({
@@ -44,10 +48,6 @@ export default function RootLayout() {
       <RootLayoutNav />
     </Providers>
   )
-}
-
-const Providers = ({ children }: { children: React.ReactNode }) => {
-  return <Provider>{children}</Provider>
 }
 
 function RootLayoutNav() {

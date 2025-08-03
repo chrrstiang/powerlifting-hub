@@ -17,8 +17,15 @@ export class AuthController {
   @Post('signup')
   @HttpCode(201)
   async signUp(@Body() dto: CreateAuthDto) {
-    await this.authService.createUser(dto, this.supabaseService.getClient());
-    return { message: 'User created successfully' };
+    const session = await this.authService.createUser(dto, this.supabaseService.getClient());
+    return { 
+      message: 'Signup successful',
+      access_token: session.access_token,
+      refresh_token: session.refresh_token,
+      user: session.user,
+      expires_at: session.expires_at,
+      expires_in: session.expires_in
+     };
   }
 
   /** Logs an existing user into the application with their email and password.
@@ -32,7 +39,10 @@ export class AuthController {
     return { 
       message: 'Login successful',
       access_token: session.access_token,
-      user: session.user
+      refresh_token: session.refresh_token,
+      user: session.user,
+      expires_at: session.expires_at,
+      expires_in: session.expires_in
      };
   }
 

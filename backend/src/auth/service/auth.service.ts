@@ -63,9 +63,11 @@ export class AuthService {
       throw new BadRequestException('Could not sign up user.');
     } else if (!data?.user?.id) {
       throw new InternalServerErrorException("ID could not be located upon sign up.");
+    } else if (!data.session) {
+      throw new InternalServerErrorException("Session could not be found.")
     }
 
-    return data.user.id;
+    return data.session;
   }
 
   /** Method is called when a user attempts to update either the email or password of their 

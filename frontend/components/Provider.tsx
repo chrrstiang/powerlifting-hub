@@ -3,6 +3,7 @@ import { TamaguiProvider, type TamaguiProviderProps } from 'tamagui'
 import { ToastProvider, ToastViewport } from '@tamagui/toast'
 import { CurrentToast } from './CurrentToast'
 import { config } from '../tamagui.config'
+import { AuthProvider } from 'contexts/AuthContext'
 
 export function Provider({ children, ...rest }: Omit<TamaguiProviderProps, 'config'>) {
   const colorScheme = useColorScheme()
@@ -23,9 +24,11 @@ export function Provider({ children, ...rest }: Omit<TamaguiProviderProps, 'conf
           ]
         }
       >
+        <AuthProvider>
         {children}
         <CurrentToast />
         <ToastViewport top="$8" left={0} right={0} />
+        </AuthProvider>
       </ToastProvider>
     </TamaguiProvider>
   )

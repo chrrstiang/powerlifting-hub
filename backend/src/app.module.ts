@@ -13,7 +13,7 @@ import { ValidatorsModule } from './common/validation/validators/validators.modu
 @Module({
   imports: [ConfigModule.forRoot({
     isGlobal: true,
-    envFilePath: `.env.${process.env.NODE_ENV}` || '.env',
+    envFilePath: process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : '.env',
   }), WorkoutsModule, UsersModule, AuthModule, BlockModule, ProgramModule, SupabaseModule, ValidatorsModule],
   controllers: [AppController],
   providers: [AppService],

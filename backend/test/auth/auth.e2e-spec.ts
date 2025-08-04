@@ -121,7 +121,7 @@ describe('Auth E2E Tests', () => {
     expect(res.status).toBe(201);
 
     // checks if they request's body is as expected
-    expect(res.body).toEqual({ message: 'User created successfully' });
+    expect(res.body.message).toEqual({ message: 'User created successfully' });
   });
 
   it('/auth/signup (POST) should return status 400 for empty body', async () => {

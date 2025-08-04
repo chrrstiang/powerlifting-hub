@@ -56,17 +56,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    * @param password Password used to sign up
    */
   const signUp = async (email: string, password: string) => {
-    callEndpoint('/auth/signup', 'Failed to sign up', email, password);
+    callEndpoint('http://10.0.0.8:3000/auth/signup', 'sign up', email, password);
   }
 
   /** Calls the login endpoint, logging in the user and returning tokens/session data
    * in the response. If returned successfully, then the authenticated state is set to true.
    */
   const login = async (email: string, password: string) => {
-    callEndpoint('/auth/login', 'Failed to login', email, password)
+    callEndpoint('http://10.0.0.8:3000/auth/login', 'log in', email, password)
   };
 
-  const callEndpoint = async(url: string, errorMessage: string, email: string, password: string) => {
+  const callEndpoint = async(url: string, operation: string, email: string, password: string) => {
     try {
         const response = await fetch(url, {
             method: 'POST',
@@ -74,13 +74,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 'Content-Type': 'application/json',
               },
             body: JSON.stringify({email, password})
-        })
+        });
+
+        const data = await response.json();
     
         if (!response.ok) {
-            throw new Error(errorMessage)
+            throw new Error(`Failed to ${operation}: ' + ${data.message}`)
         }
-    
-        const data = await response.json()
+
         const { access_token, refresh_token, user, expires_at, expires_in } = data;
 
         // Store token securely
@@ -98,7 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await SecureStore.setItemAsync(SESSION_KEY, JSON.stringify(sessionData));
         setIsAuthenticated(true);
     } catch (error) {
-        console.error(errorMessage, error);
+        console.error(error);
         throw error;
     }
   }

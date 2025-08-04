@@ -47,7 +47,7 @@ export default function SignUpScreen() {
                     id="email" 
                     placeholder="email@email.com" 
                     value={email} 
-                    onChangeText={setEmail}></Input.Area>
+                    onChangeText={setEmail} />
                 </Input.Box>
             </Input>
             <Input size={"$4"}>
@@ -58,7 +58,7 @@ export default function SignUpScreen() {
                     secureTextEntry
                     value={password}
                     onChangeText={setPassword}
-                    ></Input.Area>
+                    />
                 </Input.Box>
             </Input>
             </YStack>

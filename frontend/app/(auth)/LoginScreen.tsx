@@ -2,6 +2,8 @@ import { Button, H2, ScrollView, XStack, YStack } from "tamagui";
 import { Input } from "components/inputParts";
 import { useAuth } from "contexts/AuthContext";
 import { useState } from "react";
+import { ArrowLeft, ArrowUpLeftFromSquare } from "@tamagui/lucide-icons";
+import { router } from "expo-router";
 
 /** The sign up screen for new users
  */
@@ -26,9 +28,14 @@ export default function LoginScreen() {
         <ScrollView>
         <YStack 
         gap="$10"
-        m={"$8"}
-        mt={"$18"}
+        m={"$7"}
+        mt={"$14"}
         justify="center">
+            <XStack>
+                <Button size={"$5"}  onPress={() => router.back()} icon ={ArrowLeft}>
+                    Back
+                </Button>
+            </XStack>
             <XStack>
             <H2>Sign in.</H2>
             </XStack>

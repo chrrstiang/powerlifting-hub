@@ -11,8 +11,11 @@ import { SupabaseModule } from './supabase/supabase.module';
 import { ValidatorsModule } from './common/validation/validators/validators.module';
 
 @Module({
-  imports: [],
-  controllers: [],
-  providers: [],
+  imports: [ConfigModule.forRoot({
+    isGlobal: true,
+    envFilePath: process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : '.env',
+  }), WorkoutsModule, UsersModule, AuthModule, BlockModule, ProgramModule, SupabaseModule, ValidatorsModule],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}

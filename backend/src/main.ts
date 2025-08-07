@@ -6,9 +6,9 @@ import { validationExceptionFactory } from './common/validation/pipes/exception-
 import { useContainer } from 'class-validator';
 
 async function bootstrap() {
-  console.log('🔍 Environment check:');
-  console.log('SUPABASE_URL:', process.env.SUPABASE_URL ? 'Found ✅' : 'Not found ❌');
-  console.log('SUPABASE_SERVICE_KEY:', process.env.SUPABASE_SERVICE_KEY ? 'Found ✅' : 'Not found ❌');
+
+  console.log('⏱️  Creating app...');
+  const start = Date.now();
   
   const app = await NestFactory.create(AppModule);
 
@@ -27,5 +27,7 @@ async function bootstrap() {
   app.useGlobalFilters(new GlobalExceptionFilter());
 
   await app.listen(process.env.PORT ?? 3000);
+
+  console.log(`Started in ${Date.now() - start}ms`)
 }
 bootstrap();

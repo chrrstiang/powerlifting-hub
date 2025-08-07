@@ -30,6 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // stored tokens/sessions and authentication state
   useEffect(() => {
     const { data:  {subscription} } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log(`LISTENER TRIGGERED WITH ${event} AND ${session}`);
         if (event == 'SIGNED_IN' && session) {
             await SecureStore.setItemAsync(SESSION_KEY, JSON.stringify(session))
             await SecureStore.setItemAsync(TOKEN_KEY, session?.access_token!)
@@ -94,6 +95,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!response.ok) {
             throw new Error(`Failed to sign up: ' + ${data.message}`)
         }
+
+        console.log('SIGNUP SUCCESSFUL');
     } catch (error) {
         console.error(error);
         throw error;

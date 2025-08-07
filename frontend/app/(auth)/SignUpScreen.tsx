@@ -19,11 +19,9 @@ export default function SignUpScreen() {
         try {
            await signUp(email, password);
 
-           if (isAuthenticated) {
-            router.replace('/(auth)/EmailConfirmScreen')
-           } else {
-            throw new Error("Authentication status was not updated");
-           }
+           // assumes that signUp returns OK response, 
+           // error is handled in the signUp method
+           router.replace('/(auth)/EmailConfirmScreen');
         } catch(error) {
             console.error('Failed to sign up:', error)
         } finally {

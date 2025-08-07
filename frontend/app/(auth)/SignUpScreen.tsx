@@ -8,15 +8,22 @@ import { router } from "expo-router";
 /** The sign up screen for new users
  */
 export default function SignUpScreen() {
-    const { signUp } = useAuth();
+    const { signUp, isAuthenticated } = useAuth();
     const[email, setEmail] = useState('')
     const[password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
 
+    // signs user up & updates authentication state
     const handleSignUp = async () => {
         setLoading(true);
         try {
-            await signUp(email, password)
+           await signUp(email, password);
+
+           if (isAuthenticated) {
+            router.replace('/(auth)/EmailConfirmScreen')
+           } else {
+            throw new Error("Authentication status was not updated");
+           }
         } catch(error) {
             console.error('Failed to sign up:', error)
         } finally {

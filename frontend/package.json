@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@react-navigation/native": "^7.1.6",
+    "@supabase/supabase-js": "^2.53.0",
     "@tamagui/config": "^1.132.15",
     "@tamagui/lucide-icons": "^1.132.15",
     "@tamagui/toast": "^1.132.15",

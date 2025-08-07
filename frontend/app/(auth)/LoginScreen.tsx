@@ -2,13 +2,13 @@ import { Button, H2, ScrollView, XStack, YStack } from "tamagui";
 import { Input } from "components/inputParts";
 import { useAuth } from "contexts/AuthContext";
 import { useState } from "react";
-import { ArrowLeft, ArrowUpLeftFromSquare } from "@tamagui/lucide-icons";
+import { ArrowLeft } from "@tamagui/lucide-icons";
 import { router } from "expo-router";
 
 /** The sign up screen for new users
  */
 export default function LoginScreen() {
-    const { login } = useAuth();
+    const { login, isAuthenticated } = useAuth();
     const[email, setEmail] = useState('')
     const[password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -16,7 +16,13 @@ export default function LoginScreen() {
     const handleLogin = async () => {
         setLoading(true);
         try {
-            await login(email, password)
+            await login(email, password);
+
+            if (isAuthenticated) {
+                router.replace('/(protected)/(tabs)')
+               } else {
+                throw new Error("Authentication status was not updated");
+               }
         } catch(error) {
             console.error('Failed to login:', error)
         } finally {

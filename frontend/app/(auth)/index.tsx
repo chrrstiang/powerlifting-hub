@@ -1,5 +1,5 @@
 import { Link } from "expo-router";
-import { Button, H1, H2, H4, Paragraph, XStack, YStack } from "tamagui";
+import { Button, H2, Paragraph, XStack, YStack } from "tamagui";
 
 /** The initial landing screen of the application, when that the user is not authenticated.
  */
@@ -20,7 +20,7 @@ export default function LandingScreen() {
                 <Paragraph>Discovery</Paragraph>
             </YStack>
             <YStack gap="$10" verticalAlign={"center"}>
-                <Link href="/(auth)/SignInScreen" asChild>
+                <Link href="/(auth)/SignUpScreen" asChild>
                 <Button size={"$6"}>
                     Get started
                 </Button>

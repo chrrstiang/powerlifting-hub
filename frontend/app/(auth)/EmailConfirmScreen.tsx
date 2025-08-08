@@ -8,14 +8,12 @@ export default function ConfirmEmailScreen() {
 
     // listens for update to authentication state and redirects user to app
     useEffect(() => {
+    console.log("I WAS TRIGGERED BY AUTH CHANGE");
     if (isAuthenticated) {
-      router.replace('/(protected)/(tabs)');
+        console.log('🔥 USER IS NOW AUTHENTICATED - REDIRECTING')
+        router.replace('/(protected)/(tabs)');
     }
   }, [isAuthenticated]);
-
-    const handleLinkResend = async () => {
-        return;
-    }
 
     return(
         <YStack
@@ -26,9 +24,6 @@ export default function ConfirmEmailScreen() {
             <H3>
                 An email was sent to "email". Please confirm.
             </H3>
-            <Button onPress={handleLinkResend}>
-                Resend Email
-            </Button>
         </YStack>
     )
 }

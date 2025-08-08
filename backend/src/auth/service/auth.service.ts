@@ -6,6 +6,7 @@ import { Injectable } from '@nestjs/common';
 import { CreateAuthDto } from '../dto/create-auth.dto';
 import { UpdateAuthDto } from '../dto/update-auth.dto';
 import { SupabaseClient } from '@supabase/supabase-js';
+import { MagicLinkAuthDTO } from '../dto/magic-link.dto';
 
 @Injectable()
 export class AuthService {
@@ -68,6 +69,30 @@ export class AuthService {
     }
 
     return data;
+  }
+
+  /** Sends a magic link to an email, allowing for user authentication as both
+   * a new user and an existing user.
+   * 
+   * @param dto The DTO containing the email.
+   * @param supabase The supabase client.
+   */
+  async authWithMagicLink(dto: MagicLinkAuthDTO, supabase: SupabaseClient) {
+
+    const email = dto.email;
+    const redirect = dto.redirect
+
+    const {error} =  await supabase.auth.signInWithOtp({
+      email: email,
+      options: {
+        shouldCreateUser: true,
+        emailRedirectTo: redirect
+      }
+    })
+
+    if (error) {
+      throw new BadRequestException(`Could not sign up user: ${error.message}`);
+    }
   }
 
   /** Method is called when a user attempts to update either the email or password of their 

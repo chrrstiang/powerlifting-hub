@@ -8,16 +8,15 @@ import { router } from "expo-router";
 /** The sign up screen for new users
  */
 export default function SignUpScreen() {
-    const { signUp, isAuthenticated } = useAuth();
+    const { signUp, sendMagicLink, isAuthenticated } = useAuth();
     const[email, setEmail] = useState('')
-    const[password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
 
     // signs user up & updates authentication state
     const handleSignUp = async () => {
         setLoading(true);
         try {
-           await signUp(email, password);
+           await sendMagicLink(email);
 
            // assumes that signUp returns OK response, 
            // error is handled in the signUp method
@@ -53,17 +52,6 @@ export default function SignUpScreen() {
                     placeholder="email@email.com" 
                     value={email} 
                     onChangeText={setEmail} />
-                </Input.Box>
-            </Input>
-            <Input size={"$4"}>
-                <Input.Label htmlFor="password">Password</Input.Label>
-                <Input.Box>
-                    <Input.Area id="password" 
-                    placeholder="Enter Password" 
-                    secureTextEntry
-                    value={password}
-                    onChangeText={setPassword}
-                    />
                 </Input.Box>
             </Input>
             </YStack>

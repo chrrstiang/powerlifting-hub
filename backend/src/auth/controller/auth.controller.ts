@@ -3,6 +3,7 @@ import { AuthService } from '../service/auth.service';
 import { CreateAuthDto } from '../dto/create-auth.dto';
 import { UpdateAuthDto } from '../dto/update-auth.dto';
 import { SupabaseService } from 'src/supabase/supabase.service';
+import { MagicLinkAuthDTO } from '../dto/magic-link.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -21,6 +22,15 @@ export class AuthController {
     return { 
       message: 'User created successfully',
       user: data.user,
+     };
+  }
+
+  @Post('magic-link/send')
+  @HttpCode(201)
+  async authWithMagicLink(@Body() dto: MagicLinkAuthDTO) {
+    const data = await this.authService.authWithMagicLink(dto, this.supabaseService.getClient());
+    return {
+      message: `Magic link sent to ${dto.email}`,
      };
   }
 

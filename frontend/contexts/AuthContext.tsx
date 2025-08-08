@@ -1,12 +1,15 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import * as SecureStore from 'expo-secure-store';
+import * as QueryParams from 'expo-auth-session/build/QueryParams'
+import { makeRedirectUri } from 'expo-auth-session'
 import { supabase } from 'lib/supabase';
-import { router } from 'expo-router';
+import * as Linking from 'expo-linking';
 
 interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   signUp: (email: string, password: string) => Promise<void>;
+  sendMagicLink: (email: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -19,34 +22,50 @@ const SESSION_KEY = 'auth_session';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(true)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [awaitingConfirmation, setAwaitingConfirmation] = useState(false);
+
+  const url = Linking.useLinkingURL();
+
+  useEffect(() => {
+    if (url) {
+      console.log('Magic link clicked!', url);
+      handleDeepLink(url);
+    }
+  }, [url]);
 
   // Runs on app start, sets isAuthenticated.
   useEffect(() => {
     checkAuthState();
   }, []);
 
-  // Listens for auth events like sign in/sign out, updating
-  // stored tokens/sessions and authentication state
-  useEffect(() => {
-    const { data:  {subscription} } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log(`LISTENER TRIGGERED WITH ${event} AND ${session}`);
-        if (event == 'SIGNED_IN' && session) {
-            await SecureStore.setItemAsync(SESSION_KEY, JSON.stringify(session))
-            await SecureStore.setItemAsync(TOKEN_KEY, session?.access_token!)
+  const handleDeepLink = async (url: string) => {
+    console.log('🔥 DEEP LINK HANDLER TRIGGERED');
     
-            setIsAuthenticated(true)
-            router.replace('/(protected)/(tabs)');
-        } else if (event == 'SIGNED_OUT') {
-            await SecureStore.deleteItemAsync(SESSION_KEY);
-            await SecureStore.deleteItemAsync(TOKEN_KEY);
+    // Parse tokens from URL
+    const { params } = QueryParams.getQueryParams(url);
+    const { access_token, refresh_token } = params;
+    
+    if (access_token && refresh_token) {
+      console.log('🔥 TOKENS FOUND, CREATING SESSION');
+      
+      // Create session
+      const { data, error } = await supabase.auth.setSession({
+        access_token,
+        refresh_token,
+      });
+      
+      if (!error) {
+        console.log('🔥 SESSION CREATED, USER AUTHENTICATED');
 
-            setIsAuthenticated(false);
-        }
-      })
-
-      return () => subscription.unsubscribe();
-  }, [])
+        await SecureStore.setItemAsync(TOKEN_KEY, access_token);
+        await SecureStore.setItemAsync(SESSION_KEY, JSON.stringify(data.session))
+        
+        setIsAuthenticated(true);
+        setAwaitingConfirmation(false);
+      }
+    }
+  };
 
   /** This function attempts to retrieve a stored token and session of the user,
    * used to check for authentication. If found, authenticated state is set to true.
@@ -62,6 +81,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         setIsAuthenticated(false)
       }
+      console.log(`Authenticated?: ${isAuthenticated}`);
     } catch (error) {
       console.error('Error checking auth state:', error);
 
@@ -97,6 +117,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         console.log('SIGNUP SUCCESSFUL');
+    } catch (error) {
+        console.error(error);
+        throw error;
+    }
+  }
+
+  const sendMagicLink = async (email: string) => {
+    const redirect: string = makeRedirectUri();
+    try {
+        const response = await fetch('http://10.0.0.8:3000/auth/magic-link/send', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+              },
+            body: JSON.stringify({email, redirect})
+        });
+
+        const data = await response.json();
+    
+        if (!response.ok) {
+            throw new Error(`Failed to sign up: ' + ${data.message}`)
+        }
+
+        console.log(data.message);
+        setAwaitingConfirmation(true);
     } catch (error) {
         console.error(error);
         throw error;
@@ -149,6 +194,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isAuthenticated,
       isLoading,
       signUp,
+      sendMagicLink,
       login,
       logout,
     }}>

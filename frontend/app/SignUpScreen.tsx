@@ -8,7 +8,7 @@ import { router } from "expo-router";
 /** The sign up screen for new users
  */
 export default function SignUpScreen() {
-    const { signUp, sendMagicLink, isAuthenticated } = useAuth();
+    const { sendMagicLink, isAuthenticated } = useAuth();
     const[email, setEmail] = useState('')
     const [loading, setLoading] = useState(false);
 
@@ -20,7 +20,7 @@ export default function SignUpScreen() {
 
            // assumes that signUp returns OK response, 
            // error is handled in the signUp method
-           router.replace('/(auth)/EmailConfirmScreen');
+           router.replace('/ConfirmEmailScreen')
         } catch(error) {
             console.error('Failed to sign up:', error)
         } finally {
@@ -35,11 +35,6 @@ export default function SignUpScreen() {
         m={"$8"}
         mt={"$18"}
         justify="center">
-            <XStack>
-                <Button size={"$5"}  onPress={() => router.back()} icon ={ArrowLeft}>
-                    Back
-                </Button>
-            </XStack>
             <XStack>
             <H2>Sign up.</H2>
             </XStack>

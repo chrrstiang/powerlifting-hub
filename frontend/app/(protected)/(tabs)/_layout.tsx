@@ -1,9 +1,17 @@
-import { Link, Tabs } from 'expo-router'
+import { Link, router, Tabs } from 'expo-router'
 import { Button, useTheme } from 'tamagui'
 import { Home, PersonStanding, ChartBar } from '@tamagui/lucide-icons'
+import { useAuth } from 'contexts/AuthContext'
 
 export default function TabLayout() {
   const theme = useTheme()
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    console.log('Attempting to logout')
+    await logout();
+    router.replace('/SignUpScreen')
+  }
 
   return (
     <Tabs
@@ -26,11 +34,9 @@ export default function TabLayout() {
           title: 'Home tab',
           tabBarIcon: ({ color }) => <Home color={color as any} />,
           headerRight: () => (
-            <Link href=".." asChild>
-              <Button mr="$4" bg="$green8" color="$green12">
-                Hello!
+              <Button mr="$4" bg="$green8" color="$green12" onPress={handleLogout}>
+                Logout
               </Button>
-            </Link>
           ),
         }}
       />

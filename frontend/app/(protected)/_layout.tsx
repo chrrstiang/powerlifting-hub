@@ -1,28 +1,42 @@
-import { useColorScheme } from 'react-native'
 import { Redirect, Stack } from 'expo-router'
 import { useTheme } from 'tamagui'
 import { useAuth } from 'contexts/AuthContext'
+import { useEffect, useState } from 'react';
 
 export {
   // Catch any errors thrown by the Layout component.
   ErrorBoundary,
 } from 'expo-router'
 
-export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: '(auth)',
-}
-
 export default function ProtectedLayout() {
-  const { isAuthenticated } = useAuth();
-  const colorScheme = useColorScheme()
+
+  console.log("Protected layout")
+
+  const { isAuthenticated, checkAuthState } = useAuth();
+  const [loading, setLoading] = useState(true)
   const theme = useTheme()
 
+  useEffect(() => {
+    const verifyAuth = async () => {
+      await checkAuthState();
+      setLoading(false);
+    };
+    verifyAuth();
+  }, []);
+
+  if (loading) {
+    return null;
+  }
+
   if (!isAuthenticated) {
+    console.log('🙁 Not authenticated, going to auth route...')
     return(
-      <Redirect href="/(auth)" />
+      <Redirect href="/SignUpScreen" />
     )
   }
+
+  console.log('🤩 Authenticated, going to tabs route...')
+
   return (
     <Stack>
         <Stack.Screen

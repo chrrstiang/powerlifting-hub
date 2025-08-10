@@ -4,11 +4,12 @@ import * as QueryParams from 'expo-auth-session/build/QueryParams'
 import { makeRedirectUri } from 'expo-auth-session'
 import { supabase } from 'lib/supabase';
 import * as Linking from 'expo-linking';
+import { Session } from '@supabase/supabase-js';
 
 interface AuthContextType {
   isAuthenticated: boolean;
+  checkAuthState: () => Promise<void>;
   isLoading: boolean;
-  signUp: (email: string, password: string) => Promise<void>;
   sendMagicLink: (email: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -17,36 +18,50 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Keys for secure storage
-const TOKEN_KEY = 'auth_token';
-const SESSION_KEY = 'auth_session';
+const ACCESS_TOKEN_KEY = 'auth_access_token';
+const REFRESH_TOKEN_KEY = 'auth_refresh_token';
+const EXPIRES_AT_KEY = 'auth_expires_at';
+const LAST_PROCESSED_URL_KEY = 'last_processed_url'; 
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [awaitingConfirmation, setAwaitingConfirmation] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const url = Linking.useLinkingURL();
 
+  // listens for deep link navigations
   useEffect(() => {
     if (url) {
-      console.log('Magic link clicked!', url);
+      console.log('Link detected:', url);
       handleDeepLink(url);
     }
   }, [url]);
 
-  // Runs on app start, sets isAuthenticated.
   useEffect(() => {
-    checkAuthState();
-  }, []);
+    console.log('🔥 isAuthenticated state changed to:', isAuthenticated);
+  }, [isAuthenticated]);
 
+  /** Handles the navigation from a deep link into the app.
+   * Currently, the only deep link is from signup/sign-in. 
+   * 
+   * @param url The URL that was clicked, redirecting the user to the app.
+   */
   const handleDeepLink = async (url: string) => {
+
+    const lastUrl = await SecureStore.getItemAsync(LAST_PROCESSED_URL_KEY);
+    
+    if (url === lastUrl) {
+      console.log('🔄 Same URL as before, skipping...');
+      return;
+    }
+
     console.log('🔥 DEEP LINK HANDLER TRIGGERED');
     
     // Parse tokens from URL
     const { params } = QueryParams.getQueryParams(url);
-    const { access_token, refresh_token } = params;
+    const { access_token, refresh_token, expires_at } = params;
     
-    if (access_token && refresh_token) {
+    if (access_token && refresh_token && expires_at) {
       console.log('🔥 TOKENS FOUND, CREATING SESSION');
       
       // Create session
@@ -55,38 +70,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         refresh_token,
       });
       
-      if (!error) {
+      if (!error && data.session) {
         console.log('🔥 SESSION CREATED, USER AUTHENTICATED');
 
-        await SecureStore.setItemAsync(TOKEN_KEY, access_token);
-        await SecureStore.setItemAsync(SESSION_KEY, JSON.stringify(data.session))
+        await storeSession(data.session);
+        console.log('SESSION STORED!')
         
         setIsAuthenticated(true);
-        setAwaitingConfirmation(false);
+
+        await SecureStore.setItemAsync(LAST_PROCESSED_URL_KEY, url);
       }
     }
   };
 
-  /** This function attempts to retrieve a stored token and session of the user,
-   * used to check for authentication. If found, authenticated state is set to true.
+  /** Stores necessary tokens and information of a session in SecureStore, for later reference.
+   * 
+   * @param session The session to extract the information from.
    */
+  const storeSession = async (session: Session) => {
+    const { access_token, refresh_token, expires_at } = session;
+
+    await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, access_token);
+    await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refresh_token);
+    await SecureStore.setItemAsync(EXPIRES_AT_KEY, expires_at!.toString());
+  }
+
   const checkAuthState = async () => {
+    console.log('Checking auth state...');
     try {
       // Get stored token and user data
-      const token = await SecureStore.getItemAsync(TOKEN_KEY);
-      const session = await SecureStore.getItemAsync(SESSION_KEY);
+      const access_token = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+      const refresh_token = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
+      const expires_at = await SecureStore.getItemAsync(EXPIRES_AT_KEY)
 
-      if (token && session) {
+      if (access_token && refresh_token && expires_at) {
+        console.log('👽 Found stored session info...')
         setIsAuthenticated(true)
       } else {
-        setIsAuthenticated(false)
+        console.log('🫢 Could not find stored session info...')
+        setIsAuthenticated(false);
       }
-      console.log(`Authenticated?: ${isAuthenticated}`);
     } catch (error) {
       console.error('Error checking auth state:', error);
 
-      await SecureStore.deleteItemAsync(SESSION_KEY);
-      await SecureStore.deleteItemAsync(TOKEN_KEY);
+      await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
+      await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
+      await SecureStore.deleteItemAsync(EXPIRES_AT_KEY);
 
       setIsAuthenticated(false);
     } finally {
@@ -94,36 +123,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  /** Calls the signup endpoint creating user in Supabase, and storing tokens/session,
-   * setting authentication state to true
-   * 
-   * @param email Email used to sign up
-   * @param password Password used to sign up
-   */
-  const signUp = async (email: string, password: string) => {
-    try {
-        const response = await fetch('http://10.0.0.8:3000/auth/signup', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-              },
-            body: JSON.stringify({email, password})
-        });
-
-        const data = await response.json();
-    
-        if (!response.ok) {
-            throw new Error(`Failed to sign up: ' + ${data.message}`)
-        }
-
-        console.log('SIGNUP SUCCESSFUL');
-    } catch (error) {
-        console.error(error);
-        throw error;
-    }
-  }
-
+  // sends a magic link to the given email for login/signup
   const sendMagicLink = async (email: string) => {
+
+    clearAuthData();
+    setIsAuthenticated(false);
+
     const redirect: string = makeRedirectUri();
     try {
         const response = await fetch('http://10.0.0.8:3000/auth/magic-link/send', {
@@ -141,7 +146,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         console.log(data.message);
-        setAwaitingConfirmation(true);
     } catch (error) {
         console.error(error);
         throw error;
@@ -178,22 +182,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    */
   const logout = async () => {
     try {
-      await fetch('http://10.0.0.8:3000/auth/logout', {
+      const response = await fetch('http://10.0.0.8:3000/auth/logout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         }
       });
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error("Failed to logout: " + data.message);
+      }
+
+      clearAuthData();
+      setIsAuthenticated(false);
     } catch (error) {
       console.error('Logout error:', error);
+      throw Error;
     }
   };
+
+  const clearAuthData = async () => {
+    await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
+    await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
+    await SecureStore.deleteItemAsync(EXPIRES_AT_KEY);
+  }
 
   return (
     <AuthContext.Provider value={{
       isAuthenticated,
+      checkAuthState,
       isLoading,
-      signUp,
       sendMagicLink,
       login,
       logout,

@@ -1,18 +1,19 @@
 import 'tamagui-web.css'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useColorScheme } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native'
 import { useFonts } from 'expo-font'
 import { SplashScreen, Stack } from 'expo-router'
 import { Provider } from 'components/Provider'
-import { useTheme } from 'tamagui'
+import { useAuth } from 'contexts/AuthContext'
 
 export {
   // Catch any errors thrown by the Layout component.
   ErrorBoundary,
 } from 'expo-router'
+
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync()
@@ -38,6 +39,8 @@ export default function RootLayout() {
     return null
   }
 
+  console.log("Root layout")
+
   return (
     <Providers>
       <RootLayoutNav />
@@ -46,12 +49,33 @@ export default function RootLayout() {
 }
 
 function RootLayoutNav() {
+  const { checkAuthState, isAuthenticated, isLoading } = useAuth()
   const colorScheme = useColorScheme()
-  const theme = useTheme()
+
+  useEffect(() => {
+    const verify = async () => {
+      await checkAuthState();
+    }
+    verify();
+  }, [])
+
+  if (isLoading) {
+    return null;
+  }
+
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-      <Stack />
+      <Stack>
+        <Stack.Protected guard={isAuthenticated}>
+        <Stack.Screen
+        name="(protected)"
+        options={{
+          headerShown: false
+        }} />
+        </Stack.Protected>
+        <Stack.Screen name="SignUpScreen" />
+      </Stack>
     </ThemeProvider>
   )
 }

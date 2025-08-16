@@ -1,16 +1,15 @@
-import { IsInt, IsDate} from 'class-validator'
+import { IsInt, IsDate } from 'class-validator';
 import { Exercise } from '../entities/exercise.entity';
 
 export class CreateWorkoutDto {
+  @IsInt()
+  blockId: number;
 
-    @IsInt()
-    blockId: number;
+  @IsInt()
+  athleteId: number;
 
-    @IsInt()
-    athleteId: number;
+  exercises: Exercise[];
 
-    exercises: Exercise[];
-
-    @IsDate()
-    date: Date;
+  @IsDate()
+  date: Date;
 }

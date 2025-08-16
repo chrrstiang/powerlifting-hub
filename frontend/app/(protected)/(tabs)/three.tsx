@@ -1,4 +1,4 @@
-import { Text, View } from 'tamagui'
+import { Text, View } from "tamagui";
 
 export default function TabThreeScreen() {
   return (
@@ -7,5 +7,5 @@ export default function TabThreeScreen() {
         Tab three
       </Text>
     </View>
-  )
+  );
 }

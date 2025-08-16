@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { UpdateUserDto } from '../../dto/update-user.dto';
 import { CreateCoachDto } from '../../dto/coach/create-coach.dto';
 import { CoachService } from '../../service/coach/coach.service';
@@ -23,7 +31,7 @@ export class CoachController {
   }
 
   @Get('athletes/:id/program')
-  getAthletePrograms(@Param() id: string, ) {
+  getAthletePrograms(@Param() id: string) {
     return this.coachService.findOne(+id);
   }
 

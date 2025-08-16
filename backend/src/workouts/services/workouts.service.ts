@@ -11,10 +11,11 @@ export class WorkoutsService {
   // this is the stuff that happens when a Workout is created
   create(createWorkoutDto: CreateWorkoutDto) {
     const newWorkout: Workout = {
-      id: this.nextId++, ...createWorkoutDto,
+      id: this.nextId++,
+      ...createWorkoutDto,
       blockId: 0,
-      exercises: []
-    }
+      exercises: [],
+    };
     this.workouts.push(newWorkout);
     return newWorkout;
   }
@@ -26,7 +27,7 @@ export class WorkoutsService {
 
   // fetches a specific workout for an Athlete
   findOne(id: number) {
-    return this.workouts.find(w => w.id == id);
+    return this.workouts.find((w) => w.id == id);
   }
 
   // updates a workout of an Athlete
@@ -39,6 +40,6 @@ export class WorkoutsService {
 
   // removes a workout of an Athlete
   remove(id: number) {
-    return this.workouts.filter(w => w.id !== id);
+    return this.workouts.filter((w) => w.id !== id);
   }
 }

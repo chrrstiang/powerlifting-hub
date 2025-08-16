@@ -8,15 +8,16 @@ Must use supabaseService.getClient() to access supabase.
 */
 @Injectable()
 export class SupabaseService {
+  private supabase: SupabaseClient;
 
-private supabase: SupabaseClient;
-
-constructor(private configService: ConfigService) {
+  constructor(private configService: ConfigService) {
     const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
     const supabaseKey = this.configService.get<string>('SUPABASE_SERVICE_KEY');
 
     if (!supabaseUrl || !supabaseKey) {
-      throw new NotFoundException('Missing Supabase URL or Key in environment variables');
+      throw new NotFoundException(
+        'Missing Supabase URL or Key in environment variables',
+      );
     }
 
     this.supabase = createClient(supabaseUrl, supabaseKey);

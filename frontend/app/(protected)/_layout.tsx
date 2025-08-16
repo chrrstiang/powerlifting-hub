@@ -1,62 +1,49 @@
-import { Redirect, Stack } from 'expo-router'
-import { useTheme } from 'tamagui'
-import { useAuth } from 'contexts/AuthContext'
-import { useEffect, useState } from 'react';
+import { Redirect, Stack } from "expo-router";
+import { useTheme } from "tamagui";
+import { useAuth } from "contexts/AuthContext";
+import { useEffect, useState } from "react";
 
 export {
   // Catch any errors thrown by the Layout component.
   ErrorBoundary,
-} from 'expo-router'
+} from "expo-router";
 
 export default function ProtectedLayout() {
+  const theme = useTheme();
 
-  console.log("Protected layout")
+  const completedProfile = false;
 
-  const { isAuthenticated, checkAuthState } = useAuth();
-  const [loading, setLoading] = useState(true)
-  const theme = useTheme()
-
-  useEffect(() => {
-    const verifyAuth = async () => {
-      await checkAuthState();
-      setLoading(false);
-    };
-    verifyAuth();
-  }, []);
-
-  if (loading) {
-    return null;
-  }
-
-  if (!isAuthenticated) {
-    console.log('🙁 Not authenticated, going to auth route...')
-    return(
-      <Redirect href="/SignUpScreen" />
-    )
-  }
-
-  console.log('🤩 Authenticated, going to tabs route...')
+  console.log("🤩 Made it to protected route!");
 
   return (
-    <Stack>
-        <Stack.Screen
-        name="(tabs)"
+    <Stack initialRouteName="ProfileCompleteScreen">
+      <Stack.Screen
+        name="ProfileCompleteScreen"
         options={{
-          headerShown: false
-        }} />
+          headerShown: false,
+        }}
+      />
+      <Stack.Protected guard={completedProfile}>
         <Stack.Screen
-          name="modal"
+          name="(tabs)"
           options={{
-            title: 'Tamagui + Expo',
-            presentation: 'modal',
-            animation: 'slide_from_right',
-            gestureEnabled: true,
-            gestureDirection: 'horizontal',
-            contentStyle: {
-              backgroundColor: theme.background.val,
-            },
+            headerShown: false,
           }}
         />
-      </Stack>
-  )
+      </Stack.Protected>
+      <Stack.Screen
+        name="modal"
+        options={{
+          title: "Tamagui + Expo",
+          presentation: "modal",
+          animation: "slide_from_right",
+          gestureEnabled: true,
+          gestureDirection: "horizontal",
+          contentStyle: {
+            backgroundColor: theme.background.val,
+          },
+        }}
+      />
+    </Stack>
+  );
 }

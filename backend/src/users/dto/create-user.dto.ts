@@ -1,15 +1,24 @@
-import { IsString, IsNotEmpty, IsEnum, IsDateString, IsLowercase, Matches, Length } from 'class-validator'
+import {
+  IsString,
+  IsNotEmpty,
+  IsEnum,
+  IsDateString,
+  IsLowercase,
+  Matches,
+  Length,
+} from 'class-validator';
 import { IsUnique } from 'src/common/validation/decorators/unique.decorator';
 
 export enum Gender {
-  MALE = "Male", FEMALE = "Female", GENDER_FLUID = "Gender-fluid"
+  MALE = 'Male',
+  FEMALE = 'Female',
+  GENDER_FLUID = 'Gender-fluid',
 }
 
 /** Contains all requierd fields when a user is completing their profile.
- * 
+ *
  */
 export class CreateUserDto {
-
   @IsNotEmpty()
   @IsString()
   name: string;

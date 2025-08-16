@@ -1,17 +1,17 @@
-import { Link, router, Tabs } from 'expo-router'
-import { Button, useTheme } from 'tamagui'
-import { Home, PersonStanding, ChartBar } from '@tamagui/lucide-icons'
-import { useAuth } from 'contexts/AuthContext'
+import { Link, router, Tabs } from "expo-router";
+import { Button, useTheme } from "tamagui";
+import { Home, PersonStanding, ChartBar } from "@tamagui/lucide-icons";
+import { useAuth } from "contexts/AuthContext";
 
 export default function TabLayout() {
-  const theme = useTheme()
+  const theme = useTheme();
   const { logout } = useAuth();
 
   const handleLogout = async () => {
-    console.log('Attempting to logout')
+    console.log("Attempting to logout");
     await logout();
-    router.replace('/SignUpScreen')
-  }
+    router.replace("/SignUpScreen");
+  };
 
   return (
     <Tabs
@@ -31,29 +31,34 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home tab',
+          title: "Home tab",
           tabBarIcon: ({ color }) => <Home color={color as any} />,
           headerRight: () => (
-              <Button mr="$4" bg="$green8" color="$green12" onPress={handleLogout}>
-                Logout
-              </Button>
+            <Button
+              mr="$4"
+              bg="$green8"
+              color="$green12"
+              onPress={handleLogout}
+            >
+              Logout
+            </Button>
           ),
         }}
       />
       <Tabs.Screen
         name="two"
         options={{
-          title: 'Program',
+          title: "Program",
           tabBarIcon: ({ color }) => <ChartBar color={color as any} />,
         }}
       />
       <Tabs.Screen
         name="three"
         options={{
-          title: 'Profile',
+          title: "Profile",
           tabBarIcon: ({ color }) => <PersonStanding color={color as any} />,
         }}
       />
     </Tabs>
-  )
+  );
 }

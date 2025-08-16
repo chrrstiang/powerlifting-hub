@@ -1,7 +1,6 @@
 import { IsString, IsInt, ValidateNested, IsNumber } from 'class-validator';
 
 export class CreateExerciseDto {
-    
   @IsString()
   name: string;
 

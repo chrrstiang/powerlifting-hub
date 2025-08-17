@@ -1,20 +1,49 @@
 import { Check, ChevronDown, ChevronUp } from "@tamagui/lucide-icons";
 import { Adapt, Select, Sheet, YStack } from "tamagui";
 
-export function SelectComponent({
+type SelectComponentProps<T> = {
+  value: T | null;
+  setValue: (val: T) => void;
+  placeholder?: string;
+  values: T[];
+  width?: number;
+  id?: string;
+  displayKey?: keyof T;
+};
+
+export function SelectComponent<T extends string | Record<string, any>>({
   value,
   setValue,
   placeholder,
   values,
   width = 300,
   id = "select-component",
-  displayKey = null,
-}) {
+  displayKey,
+}: SelectComponentProps<T>) {
   return (
     <Select
       id={id}
-      value={value}
-      onValueChange={setValue}
+      value={
+        value && typeof value === "object" && displayKey
+          ? String(value[displayKey])
+          : String(value ?? "")
+      }
+      onValueChange={(selectedValue) => {
+        if (displayKey) {
+          // find the object that matches the chosen key
+          const obj = values.find(
+            (v) =>
+              typeof v === "object" &&
+              v !== null &&
+              String(v[displayKey]) === selectedValue
+          );
+          if (obj) {
+            setValue(obj as T);
+            return;
+          }
+        }
+        setValue(selectedValue as T); // for plain strings
+      }}
       disablePreventBodyScroll
     >
       <Select.Trigger width={width} iconAfter={ChevronDown}>
@@ -53,14 +82,16 @@ export function SelectComponent({
         <Select.Viewport minWidth={200}>
           <Select.Group>
             {values.map((val, index) => {
-              // Handle both strings and objects
-              const itemDisplay = displayKey ? val[displayKey] : val;
+              const itemDisplay =
+                displayKey && typeof val === "object" && val !== null
+                  ? String(val[displayKey])
+                  : String(val);
 
               return (
                 <Select.Item
                   key={`${id}-${itemDisplay}-${index}`}
                   index={index}
-                  value={itemDisplay.toString()}
+                  value={itemDisplay}
                 >
                   <Select.ItemText>{itemDisplay}</Select.ItemText>
                   <Select.ItemIndicator marginLeft="auto">

@@ -4,7 +4,7 @@
  *
  */
 export const VALID_TABLE_FIELDS = {
-  users: ['name', 'username', 'email', 'role', 'gender'], // Only these user fields allowed
+  users: ['name', 'username', 'email', 'role', 'gender', 'date_of_birth'], // Only these user fields allowed
   federations: ['id', 'name', 'code'],
   divisions: ['id', 'federation_id', 'name', 'minimum_age', 'maximum_age'],
   weight_classes: [

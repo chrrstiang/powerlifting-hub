@@ -1,7 +1,9 @@
-import { Redirect, Stack } from "expo-router";
-import { useTheme } from "tamagui";
-import { useAuth } from "contexts/AuthContext";
+import { Redirect, router, Stack } from "expo-router";
+import { FormProvider } from "contexts/FormContext";
+import { supabase } from "lib/supabase";
+import { ID_KEY } from "contexts/AuthContext";
 import { useEffect, useState } from "react";
+import * as SecureStore from "expo-secure-store";
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -9,41 +11,58 @@ export {
 } from "expo-router";
 
 export default function ProtectedLayout() {
-  const theme = useTheme();
+  const [completedProfile, setCompletedProfile] = useState(false);
 
-  const completedProfile = false;
+  useEffect(() => {
+    checkProfile();
+  }, []);
+
+  const checkProfile = async () => {
+    const id = await SecureStore.getItemAsync(ID_KEY);
+    const { data, error } = await supabase
+      .from("users")
+      .select("name, username, gender, date_of_birth")
+      .eq("id", id)
+      .single();
+
+    if (error) {
+      throw new Error("Could not find user info.");
+    }
+
+    if (
+      data.name == null ||
+      data.username == null ||
+      data.gender == null ||
+      data.date_of_birth == null
+    ) {
+      console.error("Profile is not completed. Redirecting to completion form");
+    }
+
+    setCompletedProfile(true);
+  };
 
   console.log("🤩 Made it to protected route!");
 
   return (
-    <Stack initialRouteName="ProfileCompleteScreen">
-      <Stack.Screen
-        name="ProfileCompleteScreen"
-        options={{
-          headerShown: false,
-        }}
-      />
-      <Stack.Protected guard={completedProfile}>
-        <Stack.Screen
-          name="(tabs)"
-          options={{
-            headerShown: false,
-          }}
-        />
-      </Stack.Protected>
-      <Stack.Screen
-        name="modal"
-        options={{
-          title: "Tamagui + Expo",
-          presentation: "modal",
-          animation: "slide_from_right",
-          gestureEnabled: true,
-          gestureDirection: "horizontal",
-          contentStyle: {
-            backgroundColor: theme.background.val,
-          },
-        }}
-      />
-    </Stack>
+    <FormProvider>
+      <Stack>
+        <Stack.Protected guard={!completedProfile}>
+          <Stack.Screen
+            name="ProfileCompleteScreen"
+            options={{
+              headerShown: false,
+            }}
+          />
+        </Stack.Protected>
+        <Stack.Protected guard={completedProfile}>
+          <Stack.Screen
+            name="(tabs)"
+            options={{
+              headerShown: false,
+            }}
+          />
+        </Stack.Protected>
+      </Stack>
+    </FormProvider>
   );
 }

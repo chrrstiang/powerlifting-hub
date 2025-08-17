@@ -13,14 +13,16 @@ interface AuthContextType {
   sendMagicLink: (email: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  getValidAccessToken: () => Promise<string | void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Keys for secure storage
-const ACCESS_TOKEN_KEY = "auth_access_token";
-const REFRESH_TOKEN_KEY = "auth_refresh_token";
-const EXPIRES_AT_KEY = "auth_expires_at";
+export const ACCESS_TOKEN_KEY = "auth_access_token";
+export const REFRESH_TOKEN_KEY = "auth_refresh_token";
+export const EXPIRES_AT_KEY = "auth_expires_at";
+export const ID_KEY = "auth_id_secure_key";
 const LAST_PROCESSED_URL_KEY = "last_processed_url";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -87,8 +89,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    * @param session The session to extract the information from.
    */
   const storeSession = async (session: Session) => {
-    const { access_token, refresh_token, expires_at } = session;
+    const { access_token, refresh_token, expires_at, user } = session;
 
+    const id = user.id;
+
+    await SecureStore.setItemAsync(ID_KEY, id);
     await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, access_token);
     await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refresh_token);
     await SecureStore.setItemAsync(EXPIRES_AT_KEY, expires_at!.toString());
@@ -122,6 +127,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // uses the current refresh token to get a new access_token to pass to requests
+  const getValidAccessToken = async (): Promise<string | void> => {
+    try {
+      // 1. Get the stored refresh token
+      const refresh_token = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
+
+      if (!refresh_token) return;
+
+      // 2. Use Supabase client to refresh session
+      const { data, error } = await supabase.auth.refreshSession({
+        refresh_token,
+      });
+
+      if (error) {
+        throw new Error(`Failed to refresh session:", ${error.message}`);
+      }
+
+      // 3. Save the new access token and refresh token
+      if (data?.session) {
+        await SecureStore.setItemAsync(
+          ACCESS_TOKEN_KEY,
+          data.session.access_token
+        );
+        await SecureStore.setItemAsync(
+          REFRESH_TOKEN_KEY,
+          data.session.refresh_token
+        );
+        return data.session.access_token;
+      }
+    } catch (err) {
+      console.error(err);
+      await logout();
+    }
+  };
+
   // sends a magic link to the given email for login/signup
   const sendMagicLink = async (email: string) => {
     clearAuthData();
@@ -137,7 +177,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ email, redirect }),
-        },
+        }
       );
 
       const data = await response.json();
@@ -181,6 +221,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    * state to false
    */
   const logout = async () => {
+    console.log("Logging out");
     try {
       const response = await fetch("http://10.0.0.8:3000/auth/logout", {
         method: "POST",
@@ -218,6 +259,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         sendMagicLink,
         login,
         logout,
+        getValidAccessToken,
       }}
     >
       {children}

@@ -6,16 +6,46 @@ import {
   ArrowRight,
 } from "@tamagui/lucide-icons";
 import { Input } from "components/inputParts";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { router } from "expo-router";
 import { Keyboard, TouchableWithoutFeedback } from "react-native";
 import { SelectComponent } from "components/selectComponent";
+import * as SecureStore from "expo-secure-store";
+import { useAuth } from "contexts/AuthContext";
 
-export default function AthleteProfileForm() {
+export const NAME_KEY = "user_profile_name";
+export const USERNAME_KEY = "user_profile_username";
+export const GENDER_KEY = "user_profile_gender";
+export const DATE_OF_BIRTH_KEY = "user_profile_date_of_birth";
+
+export default function CompleteProfileForm() {
   const [gender, setGender] = useState("");
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
   const [dob, setDob] = useState("");
+  const { logout } = useAuth();
+
+  useEffect(() => {
+    console.log(`Updated gender to ${gender}`);
+  }, [gender]);
+
+  // store info for submit later on
+  const handleNext = async () => {
+    try {
+      if (!name || !username || !gender || !dob) {
+        throw new Error("Please make sure all fields are filled out.");
+      }
+      await SecureStore.setItemAsync(NAME_KEY, name);
+      await SecureStore.setItemAsync(USERNAME_KEY, username);
+      await SecureStore.setItemAsync(GENDER_KEY, gender);
+      await SecureStore.setItemAsync(DATE_OF_BIRTH_KEY, dob);
+
+      router.replace("/(protected)/SelectRoleScreen");
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  };
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -67,11 +97,7 @@ export default function AthleteProfileForm() {
                 />
               </Input.Box>
             </Input>
-            <Button
-              iconAfter={ArrowRight}
-              onPress={() => router.push("/(protected)/SelectRoleScreen")}
-              mt={"$5"}
-            >
+            <Button iconAfter={ArrowRight} onPress={handleNext} mt={"$5"}>
               Next
             </Button>
           </Form>

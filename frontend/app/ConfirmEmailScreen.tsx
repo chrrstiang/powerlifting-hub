@@ -11,7 +11,7 @@ export default function ConfirmEmailScreen() {
     console.log("I WAS TRIGGERED BY AUTH CHANGE");
     if (isAuthenticated) {
       console.log("🔥 USER IS NOW AUTHENTICATED - REDIRECTING");
-      router.replace("/(protected)/ProfileRoleScreen");
+      router.replace("/(protected)/ProfileCompleteScreen");
     }
   }, [isAuthenticated]);
 
